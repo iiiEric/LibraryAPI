@@ -1,4 +1,5 @@
 ﻿using LibraryAPI.Data;
+using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -23,15 +24,23 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Author>> Get(int id)
+        public async Task<ActionResult<AuthorDto>> Get(int id)
         {
             var author = await context.Authors
-                .Include(x => x.Books)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                 .Include(x => x.Books)
+                 .Where(x => x.Id == id)
+                 .Select(x => new AuthorDto
+                 {
+                     Id = x.Id,
+                     Name = x.Name,
+                     BookTitles = x.Books.Select(book => book.Title).ToList()
+                 })
+                 .FirstOrDefaultAsync();
+
             if (author is null)
                 return NotFound();
 
-            return author;
+            return Ok(author);
         }
 
         [HttpPost]
