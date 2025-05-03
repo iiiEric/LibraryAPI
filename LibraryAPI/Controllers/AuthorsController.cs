@@ -2,7 +2,6 @@
 using LibraryAPI.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 namespace LibraryAPI.Controllers
 {
@@ -26,7 +25,9 @@ namespace LibraryAPI.Controllers
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Author>> Get(int id)
         {
-            var author = await context.Authors.FirstOrDefaultAsync(x => x.Id == id);
+            var author = await context.Authors
+                .Include(x => x.Books)
+                .FirstOrDefaultAsync(x => x.Id == id);
             if (author is null)
                 return NotFound();
 
@@ -47,9 +48,9 @@ namespace LibraryAPI.Controllers
             if (id != author.Id)
                 return BadRequest("IDs must match");
 
-            var exists = await context.Authors.AnyAsync(a => a.Id == id);
+            var exists = await context.Authors.AnyAsync(x => x.Id == id);
             if (!exists)
-                return BadRequest("Incorrect Id");
+                return BadRequest("Incorrect ID");
 
             context.Update(author);
             await context.SaveChangesAsync();
