@@ -1,5 +1,8 @@
-﻿using LibraryAPI.Entities;
+﻿using LibraryAPI.Data;
+using LibraryAPI.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace LibraryAPI.Controllers
 {
@@ -7,21 +10,59 @@ namespace LibraryAPI.Controllers
     [Route("api/[controller]")]
     public class AuthorsController: ControllerBase
     {
-        [HttpGet]
-        public IEnumerable<Author> GET()
+        private readonly ApplicationDbContext context;
+
+        public AuthorsController(ApplicationDbContext context)
         {
-            return new List<Author> {
-                new Author
-                {
-                    Id = 1,
-                    Name = "J.K. Rowling"
-                },
-                new Author
-                {
-                    Id = 2,
-                    Name = "J.R.R. Tolkien"
-                }
-            };
+            this.context = context;
+        }
+
+        [HttpGet]
+        public async Task<IEnumerable<Author>> Get()
+        {
+            return await context.Authors.ToListAsync();
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<Author>> Get(int id)
+        {
+            var author = await context.Authors.FirstOrDefaultAsync(x => x.Id == id);
+            if (author is null)
+                return NotFound();
+
+            return author;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> Post(Author author)
+        {
+            context.Add(author);
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult> Put(int id, Author author)
+        {
+            if (id != author.Id)
+                return BadRequest("IDs must match");
+
+            var exists = await context.Authors.AnyAsync(a => a.Id == id);
+            if (!exists)
+                return BadRequest("Incorrect Id");
+
+            context.Update(author);
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult> Delete(int id)
+        {
+            var recordsDeleted = await context.Authors.Where(x => x.Id == id).ExecuteDeleteAsync();
+            if (recordsDeleted == 0)
+                return NotFound();
+            return Ok();
         }
     }
 }
