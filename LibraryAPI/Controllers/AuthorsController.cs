@@ -48,7 +48,7 @@ namespace LibraryAPI.Controllers
         {
             context.Add(author);
             await context.SaveChangesAsync();
-            return Ok();
+            return Created();
         }
 
         [HttpPut("{id:int}")]

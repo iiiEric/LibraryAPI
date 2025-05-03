@@ -52,7 +52,7 @@ namespace LibraryAPI.Controllers
 
             context.Add(book);
             await context.SaveChangesAsync();
-            return Ok();
+            return Created();
         }
 
         [HttpPut("{id:int}")]
