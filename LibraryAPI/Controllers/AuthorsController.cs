@@ -85,7 +85,7 @@ namespace LibraryAPI.Controllers
             _context.Update(author);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Author with ID {AuthorId} updated successfully.", id);
-            return Ok();
+            return NoContent();
         }
 
         [HttpDelete("{id:int}")]
@@ -101,7 +101,7 @@ namespace LibraryAPI.Controllers
             }
 
             _logger.LogInformation("Author with ID {AuthorId} deleted successfully.", id);
-            return Ok();
+            return NoContent();
         }
     }
 }

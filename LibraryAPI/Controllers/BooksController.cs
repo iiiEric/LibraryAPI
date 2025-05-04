@@ -105,7 +105,7 @@ namespace LibraryAPI.Controllers
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("Book with ID {BookId} updated successfully.", id);
-            return Ok();
+            return NoContent();
         }
 
         [HttpDelete("{id:int}")]
@@ -121,7 +121,7 @@ namespace LibraryAPI.Controllers
             }
 
             _logger.LogInformation("Book with ID {BookId} deleted successfully.", id);
-            return Ok();
+            return NoContent();
         }
     }
 }
