@@ -26,7 +26,7 @@ namespace LibraryAPI.Controllers
             return await _context.Authors.ToListAsync();
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id:int}", Name = "GetAuthor")]
         public async Task<ActionResult<AuthorDto>> Get([FromRoute] int id)
         {
             _logger.LogInformation("Retrieving author with ID {AuthorId}", id);
@@ -60,7 +60,7 @@ namespace LibraryAPI.Controllers
             _context.Add(author);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Author with ID {AuthorId} created successfully.", author.Id);
-            return Created();
+            return CreatedAtRoute("GetAuthor", new { id = author.Id }, author);
         }
 
         [HttpPut("{id:int}")]

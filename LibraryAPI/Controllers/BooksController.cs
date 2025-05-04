@@ -26,7 +26,7 @@ namespace LibraryAPI.Controllers
             return await _context.Books.ToListAsync();
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id:int}", Name = "GetBook")]
         public async Task<ActionResult<BookDto>> Get([FromRoute] int id)
         {
             _logger.LogInformation("Retrieving book with ID {BookId}", id);
@@ -69,7 +69,7 @@ namespace LibraryAPI.Controllers
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("Book with ID {BookId} created successfully.", book.Id);
-            return Created();
+            return CreatedAtRoute("GetBook", new { id = book.Id }, book);
         }
 
         [HttpPut("{id:int}")]
