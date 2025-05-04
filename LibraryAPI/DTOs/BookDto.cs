@@ -2,12 +2,10 @@
 
 namespace LibraryAPI.DTOs
 {
-    public class BookDto
+    public class BookDTO
     {
         public int Id { get; set; }
 
         public required string Title { get; set; }
-
-        public string? AuthorName { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using LibraryAPI.Data;
+﻿using AutoMapper;
+using LibraryAPI.Data;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -11,36 +12,33 @@ namespace LibraryAPI.Controllers
     public class AuthorsController: ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
         private readonly ILogger<AuthorsController> _logger;
 
-        public AuthorsController(ApplicationDbContext context, ILogger<AuthorsController> logger)
+        public AuthorsController(ApplicationDbContext context, IMapper mapper, ILogger<AuthorsController> logger)
         {
             this._context = context;
+            this._mapper = mapper;
             this._logger = logger;
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Author>> Get()
+        public async Task<ActionResult<IEnumerable<AuthorDTO>>> Get()
         {
             _logger.LogInformation("Retrieving all authors.");
-            return await _context.Authors.ToListAsync();
+            var authors = await _context.Authors.ToListAsync();
+            var authorsDTO = _mapper.Map<IEnumerable<AuthorDTO>>(authors);
+            return Ok(authorsDTO);
         }
 
         [HttpGet("{id:int}", Name = "GetAuthor")]
-        public async Task<ActionResult<AuthorDto>> Get([FromRoute] int id)
+        public async Task<ActionResult<AuthorWithBooksDTO>> Get([FromRoute] int id)
         {
             _logger.LogInformation("Retrieving author with ID {AuthorId}", id);
 
             var author = await _context.Authors
                  .Include(x => x.Books)
-                 .Where(x => x.Id == id)
-                 .Select(x => new AuthorDto
-                 {
-                     Id = x.Id,
-                     Name = x.Name,
-                     BookTitles = x.Books.Select(book => book.Title).ToList()
-                 })
-                 .FirstOrDefaultAsync();
+                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (author is null)
             {
@@ -48,32 +46,33 @@ namespace LibraryAPI.Controllers
                 return NotFound();
             }
 
+            var authorWithBooksDTO = _mapper.Map<AuthorWithBooksDTO>(author);
+
             _logger.LogInformation("Author with ID {AuthorId} retrieved successfully.", id);
-            return Ok(author);
+            return Ok(authorWithBooksDTO);
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post([FromBody] Author author)
+        public async Task<ActionResult> Post([FromBody] AuthorCreationDTO authorCreationDTO)
         {
+            var author = _mapper.Map<Author>(authorCreationDTO);
+
             _logger.LogInformation("Creating author with name '{Name}'", author.Name);
 
             _context.Add(author);
             await _context.SaveChangesAsync();
+
+            var authorDTO = _mapper.Map<AuthorDTO>(author);
+
             _logger.LogInformation("Author with ID {AuthorId} created successfully.", author.Id);
-            return CreatedAtRoute("GetAuthor", new { id = author.Id }, author);
+            return CreatedAtRoute("GetAuthor", new { id = author.Id }, authorDTO);
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put([FromRoute] int id, [FromBody] Author author)
+        public async Task<ActionResult> Put([FromRoute] int id, [FromBody] AuthorCreationDTO authorCreationDTO)
         {
-            _logger.LogInformation("Updating author with route ID {RouteId} and body ID {BodyId}", id, author.Id);
-
-            if (id != author.Id)
-            {
-                _logger.LogWarning("Mismatch between route ID {RouteId} and body ID {BodyId}", id, author.Id);
-                ModelState.AddModelError(nameof(author.Id), "The route ID and the body ID must match.");
-                return ValidationProblem();
-            }
+            var author = _mapper.Map<Author>(authorCreationDTO);
+            author.Id = id;
 
             var exists = await _context.Authors.AnyAsync(x => x.Id == id);
             if (!exists)

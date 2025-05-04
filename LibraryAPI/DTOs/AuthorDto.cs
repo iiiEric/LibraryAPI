@@ -1,13 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LibraryAPI.Entities;
+using System.ComponentModel.DataAnnotations;
 
 namespace LibraryAPI.DTOs
 {
-    public class AuthorDto
+    public class AuthorDTO
     {
         public int Id { get; set; }
 
-        public required string Name { get; set; }
-
-        public List<string> BookTitles { get; set; } = new List<string>();
+        public required string FullName { get; set; }
     }
 }

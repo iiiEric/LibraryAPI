@@ -1,12 +1,11 @@
-﻿using LibraryAPI.Validation;
+﻿using LibraryAPI.Entities;
+using LibraryAPI.Validation;
 using System.ComponentModel.DataAnnotations;
 
-namespace LibraryAPI.Entities
+namespace LibraryAPI.DTOs
 {
-    public class Author
+    public class AuthorCreationDTO
     {
-        public int Id { get; set; }
-
         [Required]
         [StringLength(30)]
         [FirstLetterCapital]

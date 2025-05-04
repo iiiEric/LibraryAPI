@@ -1,8 +1,10 @@
-﻿using LibraryAPI.Data;
+﻿using AutoMapper;
+using LibraryAPI.Data;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace LibraryAPI.Controllers
 {
@@ -11,36 +13,35 @@ namespace LibraryAPI.Controllers
     public class BooksController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
         private readonly ILogger<BooksController> _logger;
 
-        public BooksController(ApplicationDbContext context, ILogger<BooksController> logger)
+        public BooksController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger)
         {
             this._context = context;
+            this._mapper = mapper;
             this._logger = logger;
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Book>> Get()
+        public async Task<ActionResult<IEnumerable<BookDTO>>> Get()
         {
             _logger.LogInformation("Retrieving all books.");
-            return await _context.Books.ToListAsync();
+
+            var books = await _context.Books.ToListAsync(); ;
+            var booksDTO = _mapper.Map<IEnumerable<BookDTO>>(books);
+
+            return Ok(booksDTO);
         }
 
         [HttpGet("{id:int}", Name = "GetBook")]
-        public async Task<ActionResult<BookDto>> Get([FromRoute] int id)
+        public async Task<ActionResult<BookWithAuthorDTO>> Get([FromRoute] int id)
         {
             _logger.LogInformation("Retrieving book with ID {BookId}", id);
 
             var book = await _context.Books
                 .Include(x => x.Author)
-                .Where(x => x.Id == id)
-                .Select(x => new BookDto
-                {
-                    Id = x.Id,
-                    Title = x.Title,
-                    AuthorName = x.Author != null ? x.Author.Name : null
-                })
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (book is null)
             {
@@ -48,13 +49,17 @@ namespace LibraryAPI.Controllers
                 return NotFound();
             }
 
+            var bookWithAuthorDTO = _mapper.Map<BookWithAuthorDTO>(book);
+
             _logger.LogInformation("Book with ID {BookId} retrieved successfully.", id);
-            return book;
+            return Ok(bookWithAuthorDTO);
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post([FromBody] Book book)
+        public async Task<ActionResult> Post([FromBody] BookCreationDTO bookCreationDTO)
         {
+            var book = _mapper.Map<Book>(bookCreationDTO);
+
             _logger.LogInformation("Creating book with title '{Title}' and author ID {AuthorId}", book.Title, book.AuthorId);
 
             var existsAuthor = await _context.Authors.AnyAsync(x => x.Id == book.AuthorId);
@@ -68,21 +73,17 @@ namespace LibraryAPI.Controllers
             _context.Add(book);
             await _context.SaveChangesAsync();
 
+            var bookDTO = _mapper.Map<BookDTO>(book);
+
             _logger.LogInformation("Book with ID {BookId} created successfully.", book.Id);
-            return CreatedAtRoute("GetBook", new { id = book.Id }, book);
+            return CreatedAtRoute("GetBook", new { id = book.Id }, bookDTO);
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put([FromRoute] int id, [FromBody] Book book)
+        public async Task<ActionResult> Put([FromRoute] int id, [FromBody] BookCreationDTO bookCreationDTO)
         {
-            _logger.LogInformation("Updating book with route ID {RouteId} and body ID {BodyId}", id, book.Id);
-
-            if (id != book.Id)
-            {
-                _logger.LogWarning("ID mismatch: route ID {RouteId} does not match body ID {BodyId}", id, book.Id);
-                ModelState.AddModelError(nameof(book.Id), "The route ID and the body ID must match.");
-                return ValidationProblem();
-            }
+            var book = _mapper.Map<Book>(bookCreationDTO);
+            book.Id = id;
 
             var existsBook = await _context.Books.AnyAsync(x => x.Id == id);
             if (!existsBook)
