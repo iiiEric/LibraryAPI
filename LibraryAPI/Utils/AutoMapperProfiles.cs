@@ -10,24 +10,21 @@ namespace LibraryAPI.Utils
         public AutoMapperProfiles()
         {
             CreateMap<Author, AuthorDTO>()
-                .ForMember(dto => dto.FullName, config => config.MapFrom(author => NameFormatter.GetAuthorFullName(author)))
-                .ReverseMap();
+                .ForMember(dto => dto.FullName, config => config.MapFrom(author => NameFormatter.GetAuthorFullName(author)));
 
             CreateMap<Author, AuthorWithBooksDTO>()
                 .ForMember(dto => dto.FullName, config => config.MapFrom(author => NameFormatter.GetAuthorFullName(author)))
-                .ForMember(dto => dto.Books, config => config.MapFrom(author => author.Books))
-                .ReverseMap();
+                .ForMember(dto => dto.Books, config => config.MapFrom(author => author.Books));
 
             CreateMap<AuthorCreationDTO, Author>();
+            CreateMap<Author, AuthorPatchDTO>().ReverseMap();
 
             CreateMap<Book, BookDTO>()
-                .ForMember(dto => dto.Title, config => config.MapFrom(book => book.Title))
-                .ReverseMap();
+                .ForMember(dto => dto.Title, config => config.MapFrom(book => book.Title));
 
             CreateMap<Book, BookWithAuthorDTO>()
                .ForMember(dto => dto.Title, config => config.MapFrom(book => book.Title))
-               .ForMember(dto => dto.AuthorName, config => config.MapFrom(book => NameFormatter.GetAuthorFullName(book.Author)))
-               .ReverseMap();
+               .ForMember(dto => dto.AuthorName, config => config.MapFrom(book => NameFormatter.GetAuthorFullName(book.Author)));
 
             CreateMap<BookCreationDTO, Book>();
         }

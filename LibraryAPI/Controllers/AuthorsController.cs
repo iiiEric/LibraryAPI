@@ -2,6 +2,7 @@
 using LibraryAPI.Data;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -85,6 +86,43 @@ namespace LibraryAPI.Controllers
             _context.Update(author);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Author with ID {AuthorId} updated successfully.", id);
+            return NoContent();
+        }
+
+        [HttpPatch("{id:int}")]
+        public async Task<ActionResult> Patch([FromRoute] int id, [FromBody] JsonPatchDocument<AuthorPatchDTO> patchDocument)
+        {
+            _logger.LogInformation("Received PATCH request for author with ID {AuthorId}.", id);
+
+            if (patchDocument is null)
+            {
+                _logger.LogWarning("PATCH request for author with ID {AuthorId} failed: patch document is null.", id);
+                ModelState.AddModelError(nameof(patchDocument), "Patch document cannot be null.");
+                return ValidationProblem();
+            }
+
+            var authorDB = await _context.Authors.FirstOrDefaultAsync(x => x.Id == id);
+            if (authorDB is null)
+            {
+                _logger.LogWarning("PATCH request failed: author with ID {AuthorId} not found.", id);
+                ModelState.AddModelError(nameof(id), $"Author with ID {id} not found.");
+                return ValidationProblem();
+            }
+
+            var authorPatchDTO = _mapper.Map<AuthorPatchDTO>(authorDB);
+            patchDocument.ApplyTo(authorPatchDTO, ModelState);
+
+            var isValid = TryValidateModel(authorPatchDTO);
+            if (!isValid)
+            {
+                _logger.LogWarning("PATCH request for author with ID {AuthorId} failed validation.", id);
+                return ValidationProblem();
+            }
+
+            _mapper.Map(authorPatchDTO, authorDB);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Author with ID {AuthorId} patched successfully.", id);
             return NoContent();
         }
 

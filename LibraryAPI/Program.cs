@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 #region Services area
 builder.Services.AddAutoMapper(typeof(Program));
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 #endregion
