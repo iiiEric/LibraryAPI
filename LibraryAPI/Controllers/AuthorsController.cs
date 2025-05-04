@@ -13,10 +13,10 @@ namespace LibraryAPI.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<AuthorsController> _logger;
 
-        public AuthorsController(ApplicationDbContext _context, ILogger<AuthorsController> _logger)
+        public AuthorsController(ApplicationDbContext context, ILogger<AuthorsController> logger)
         {
-            this._context = _context;
-            this._logger = _logger;
+            this._context = context;
+            this._logger = logger;
         }
 
         [HttpGet]

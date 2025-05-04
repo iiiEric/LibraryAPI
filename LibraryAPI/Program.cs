@@ -1,4 +1,5 @@
 using LibraryAPI.Data;
+using LibraryAPI.Middlewares;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 var app = builder.Build();
 
 #region Middleware area
+app.UseLogRequest();
+
 app.MapControllers();
 #endregion
 
