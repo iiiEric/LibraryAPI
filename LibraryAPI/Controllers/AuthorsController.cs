@@ -24,7 +24,7 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<AuthorDto>> Get(int id)
+        public async Task<ActionResult<AuthorDto>> Get([FromRoute] int id)
         {
             var author = await context.Authors
                  .Include(x => x.Books)
@@ -44,7 +44,7 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post(Author author)
+        public async Task<ActionResult> Post([FromBody] Author author)
         {
             context.Add(author);
             await context.SaveChangesAsync();
@@ -52,7 +52,7 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id, Author author)
+        public async Task<ActionResult> Put([FromRoute] int id, [FromBody] Author author)
         {
             if (id != author.Id)
                 return BadRequest("IDs must match");
@@ -67,7 +67,7 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<ActionResult> Delete([FromRoute] int id)
         {
             var recordsDeleted = await context.Authors.Where(x => x.Id == id).ExecuteDeleteAsync();
             if (recordsDeleted == 0)
