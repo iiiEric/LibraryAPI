@@ -48,8 +48,12 @@ namespace LibraryAPI.Controllers
         {
             var existsAuthor = await context.Authors.AnyAsync(x => x.Id == book.AuthorId);
             if (!existsAuthor)
-                return BadRequest($"Author id {book.AuthorId} does not exist");
-
+            {
+                //return BadRequest($"Author id {book.AuthorId} does not exist");
+                ModelState.AddModelError(nameof(book.AuthorId), $"Author id {book.AuthorId} does not exist");
+                return ValidationProblem();
+            }
+                
             context.Add(book);
             await context.SaveChangesAsync();
             return Created();
@@ -59,15 +63,24 @@ namespace LibraryAPI.Controllers
         public async Task<ActionResult> Put([FromRoute] int id, [FromBody] Book book)
         {
             if (id != book.Id)
-                return BadRequest("Book IDs must match");
+            {
+                ModelState.AddModelError(nameof(book.Id), "The route ID and the body ID must match.");
+                return ValidationProblem();
+            }
 
             var existsBook = await context.Books.AnyAsync(x => x.Id == id);
             if (!existsBook)
-                return BadRequest("Incorrect book ID");
+            {
+                ModelState.AddModelError(nameof(book.Id), "The provided ID does not match any existing book.");
+                return ValidationProblem();
+            }
 
             var existsAuthor = await context.Authors.AnyAsync(x => x.Id == book.AuthorId);
             if (!existsAuthor)
-                return BadRequest($"Author ID {book.AuthorId} does not exist");
+            {
+                ModelState.AddModelError(nameof(book.AuthorId), "The provided ID does not match any existing author.");
+                return ValidationProblem();
+            }
 
             context.Update(book);
             await context.SaveChangesAsync();

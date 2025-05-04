@@ -55,11 +55,17 @@ namespace LibraryAPI.Controllers
         public async Task<ActionResult> Put([FromRoute] int id, [FromBody] Author author)
         {
             if (id != author.Id)
-                return BadRequest("IDs must match");
+            {
+                ModelState.AddModelError(nameof(author.Id), "The route ID and the body ID must match.");
+                return ValidationProblem();
+            }
 
             var exists = await context.Authors.AnyAsync(x => x.Id == id);
             if (!exists)
-                return BadRequest("Incorrect ID");
+            {
+                ModelState.AddModelError(nameof(author.Id), "The provided ID does not match any existing author.");
+                return ValidationProblem();
+            }
 
             context.Update(author);
             await context.SaveChangesAsync();
