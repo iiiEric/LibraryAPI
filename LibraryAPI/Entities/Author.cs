@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LibraryAPI.Validation;
+using System.ComponentModel.DataAnnotations;
 
 namespace LibraryAPI.Entities
 {
@@ -6,6 +7,8 @@ namespace LibraryAPI.Entities
     {
         public int Id { get; set; }
         [Required]
+        [StringLength(100)]
+        [FirstLetterCapital]
         public required string Name { get; set; }
         public List<Book> Books { get; set; } = new List<Book>();
     }
