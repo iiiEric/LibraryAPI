@@ -27,6 +27,10 @@ namespace LibraryAPI.Utils
                .ForMember(dto => dto.AuthorName, config => config.MapFrom(book => NameFormatter.GetAuthorFullName(book.Author)));
 
             CreateMap<BookCreationDTO, Book>();
+
+            CreateMap<CommentCreationDTO, Comment>();
+            CreateMap<Comment, CommentDTO>();
+            CreateMap<CommentPatchDTO, Comment>().ReverseMap();
         }
     }
 }

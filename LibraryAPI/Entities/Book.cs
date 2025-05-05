@@ -12,5 +12,6 @@ namespace LibraryAPI.Entities
         public required string Title { get; set; }
         public int AuthorId { get; set; }
         public Author? Author { get; set; }
+        public List<Comment> Comments { get; set; } = [];
     }
 }
