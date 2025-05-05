@@ -39,6 +39,7 @@ namespace LibraryAPI.Controllers
 
             var author = await _context.Authors
                  .Include(x => x.Books)
+                 .ThenInclude(x => x.Book)
                  .FirstOrDefaultAsync(x => x.Id == id);
 
             if (author is null)
@@ -72,16 +73,16 @@ namespace LibraryAPI.Controllers
         [HttpPut("{id:int}")]
         public async Task<ActionResult> Put([FromRoute] int id, [FromBody] AuthorCreationDTO authorCreationDTO)
         {
-            var author = _mapper.Map<Author>(authorCreationDTO);
-            author.Id = id;
-
             var exists = await _context.Authors.AnyAsync(x => x.Id == id);
             if (!exists)
             {
                 _logger.LogWarning("Attempted to update non-existing author with ID {AuthorId}", id);
-                ModelState.AddModelError(nameof(author.Id), "The provided ID does not match any existing author.");
+                ModelState.AddModelError(nameof(id), "The provided ID does not match any existing author.");
                 return ValidationProblem();
             }
+
+            var author = _mapper.Map<Author>(authorCreationDTO);
+            author.Id = id;
 
             _context.Update(author);
             await _context.SaveChangesAsync();

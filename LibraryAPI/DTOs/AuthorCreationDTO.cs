@@ -23,6 +23,7 @@ namespace LibraryAPI.DTOs
         [StringLength(20)]
         public string? Identity { get; set; }
 
-        public List<Book> Books { get; set; } = [];
+        public List<BookCreationDTO> Books { get; set; } = [];
+
     }
 }

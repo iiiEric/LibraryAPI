@@ -24,6 +24,6 @@ namespace LibraryAPI.Entities
         [StringLength(20)]
         public string? Identity { get; set; }
 
-        public List<Book> Books { get; set; } = [];
+        public List<AuthorBook> Books { get; set; } = [];
     }
 }
