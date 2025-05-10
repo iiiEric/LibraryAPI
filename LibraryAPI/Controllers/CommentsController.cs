@@ -207,7 +207,8 @@ namespace LibraryAPI.Controllers
                 return Forbid();
             }
 
-            _context.Remove(comment);
+            comment.IsDeleted = true;
+            _context.Update(comment);
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("Comment with ID {CommentId} deleted successfully.", id);
