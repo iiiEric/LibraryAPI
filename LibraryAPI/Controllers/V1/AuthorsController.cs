@@ -12,10 +12,10 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 using System.Linq.Dynamic.Core;
 
-namespace LibraryAPI.Controllers
+namespace LibraryAPI.Controllers.V1
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [Authorize(Policy = "Admin")]
     public class AuthorsController: ControllerBase
     {
@@ -30,11 +30,11 @@ namespace LibraryAPI.Controllers
         public AuthorsController(ApplicationDbContext context, IMapper mapper, ILogger<AuthorsController> logger, IFileStorageService fileStorageService, 
             IOutputCacheStore outputCacheStore)
         {
-            this._context = context;
-            this._mapper = mapper;
-            this._logger = logger;
-            this._fileStorageService = fileStorageService;
-            this._outputCacheStore = outputCacheStore;
+            _context = context;
+            _mapper = mapper;
+            _logger = logger;
+            _fileStorageService = fileStorageService;
+            _outputCacheStore = outputCacheStore;
         }
 
         [HttpGet]
@@ -54,7 +54,7 @@ namespace LibraryAPI.Controllers
             return Ok(authorsDTO);
         }
 
-        [HttpGet("filter")]
+        [HttpGet("filterV1")]
         [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<AuthorDTO>>> Filter([FromQuery] AuthorFilterDTO authorFilterDTO)
         {
@@ -113,7 +113,7 @@ namespace LibraryAPI.Controllers
             }     
         }
 
-        [HttpGet("{id:int}", Name = "GetAuthor")]
+        [HttpGet("{id:int}", Name = "GetAuthorV1")]
         [AllowAnonymous]
         [EndpointSummary("Retrieves an author by their unique identifier.")]
         [EndpointDescription("Include his/her books. If the author does not exist, returns 404")]
@@ -155,7 +155,7 @@ namespace LibraryAPI.Controllers
             var authorDTO = _mapper.Map<AuthorDTO>(author);
 
             _logger.LogInformation("Author with ID {AuthorId} created successfully.", author.Id);
-            return CreatedAtRoute("GetAuthor", new { id = author.Id }, authorDTO);
+            return CreatedAtRoute("GetAuthorV1", new { id = author.Id }, authorDTO);
         }
 
         [HttpPost("with-image")]
@@ -175,7 +175,7 @@ namespace LibraryAPI.Controllers
             var authorDTO = _mapper.Map<AuthorDTO>(author);
 
             _logger.LogInformation("Author with ID {AuthorId} created successfully.", author.Id);
-            return CreatedAtRoute("GetAuthor", new { id = author.Id }, authorDTO);
+            return CreatedAtRoute("GetAuthorV1", new { id = author.Id }, authorDTO);
         }
 
         [HttpPut("{id:int}")]

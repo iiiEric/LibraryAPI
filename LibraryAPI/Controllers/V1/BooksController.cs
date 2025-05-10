@@ -9,10 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 
-namespace LibraryAPI.Controllers
+namespace LibraryAPI.Controllers.V1
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [Authorize(Policy = "Admin")]
     public class BooksController : ControllerBase
     {
@@ -26,14 +26,14 @@ namespace LibraryAPI.Controllers
         public BooksController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger/*, IDataProtectionProvider dataProtectionProvider*/,
             IOutputCacheStore outputCacheStore)
         {
-            this._context = context;
-            this._mapper = mapper;
-            this._logger = logger;
+            _context = context;
+            _mapper = mapper;
+            _logger = logger;
             //this._timeLimitedDataProtector = dataProtectionProvider.CreateProtector("BooksController").ToTimeLimitedDataProtector();
-            this._outputCacheStore = outputCacheStore;
+            _outputCacheStore = outputCacheStore;
         }
 
-        //[HttpGet("collection/get-token")]
+        //[HttpGet("collection/get-tokenV1")]
         //public ActionResult GetTokenForBookCollection()
         //{
         //    var plainText = Guid.NewGuid().ToString();
@@ -42,7 +42,7 @@ namespace LibraryAPI.Controllers
         //    return Ok(new { url });
         //}
 
-        //[HttpGet("collection/{token}", Name = "GetBookCollectionUsingToken")]
+        //[HttpGet("collection/{token}V1", Name = "GetBookCollectionUsingToken")]
         //[AllowAnonymous]
         //public async Task<ActionResult<IEnumerable<BookDTO>>> GetCollectionUsingToken(string token)
         //{
@@ -84,7 +84,7 @@ namespace LibraryAPI.Controllers
             return Ok(booksDTO);
         }
 
-        [HttpGet("{id:int}", Name = "GetBook")]
+        [HttpGet("{id:int}", Name = "GetBookV1")]
         [AllowAnonymous]
         [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<BookWithAuthorsDTO>> Get([FromRoute] int id)
@@ -124,7 +124,7 @@ namespace LibraryAPI.Controllers
             var bookDTO = _mapper.Map<BookDTO>(book);
 
             _logger.LogInformation("Book with ID {BookId} created successfully.", book.Id);
-            return CreatedAtRoute("GetBook", new { id = book.Id }, bookDTO);
+            return CreatedAtRoute("GetBookV1", new { id = book.Id }, bookDTO);
         }
 
         private void assignAuthorsOrder(Book book)

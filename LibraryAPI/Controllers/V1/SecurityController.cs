@@ -4,10 +4,10 @@
 //using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 //using static System.Runtime.InteropServices.JavaScript.JSType;
 
-//namespace LibraryAPI.Controllers
+//namespace LibraryAPI.Controllers.V1
 //{
 //    [ApiController]
-//    [Route("api/[controller]")]
+//    [Route("api/v1/[controller]")]
 //    public class SecurityController : ControllerBase
 //    {
 //        private readonly IDataProtector _dataProtector;
@@ -21,7 +21,7 @@
 //            this._hashServicies = hashServicies;
 //        }
 
-//        [HttpGet("hash")]
+//        [HttpGet("hashV1")]
 //        public ActionResult Hash(string plainText)
 //        {
 //           var hash1 = _hashServicies.Hash(plainText);
@@ -30,27 +30,27 @@
 //           return Ok( new { plainText, hash1, hash2, hash3 });
 //        }
 
-//        [HttpGet("encrypt")]
+//        [HttpGet("encryptV1")]
 //        public ActionResult Encrypt(string plainText)
 //        {
 //            if (string.IsNullOrEmpty(plainText))
 //                return BadRequest("Plain text cannot be null or empty.");
-            
+
 //            var encryptedText = _dataProtector.Protect(plainText);
 //            return Ok(new { encryptedText });
 //        }
 
-//        [HttpGet("decrypt")]
+//        [HttpGet("decryptV1")]
 //        public ActionResult Decrypt(string encryptedText)
 //        {
 //            if (string.IsNullOrEmpty(encryptedText))
 //                return BadRequest("Encrypted text cannot be null or empty.");
-            
+
 //            var plainText = _dataProtector.Unprotect(encryptedText);
 //            return Ok(new { plainText });
 //        }
 
-//        [HttpGet("time-limited-encrypt")]
+//        [HttpGet("time-limited-encryptV1")]
 //        public ActionResult TimeLimitedEncrypt(string plainText)
 //        {
 //            if (string.IsNullOrEmpty(plainText))
@@ -60,7 +60,7 @@
 //            return Ok(new { encryptedText });
 //        }
 
-//        [HttpGet("time-limited-decrypt")]
+//        [HttpGet("time-limited-decryptV1")]
 //        public ActionResult TimeLimitedDecrypt(string encryptedText)
 //        {
 //            if (string.IsNullOrEmpty(encryptedText))

@@ -6,10 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace LibraryAPI.Controllers
+namespace LibraryAPI.Controllers.V1
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [Authorize(Policy = "Admin")]
     public class AuthorsCollectionController : ControllerBase
     {
@@ -19,12 +19,12 @@ namespace LibraryAPI.Controllers
 
         public AuthorsCollectionController(ApplicationDbContext context, IMapper mapper, ILogger<AuthorsController> logger)
         {
-            this._context = context;
-            this._mapper = mapper;
-            this._logger = logger;
+            _context = context;
+            _mapper = mapper;
+            _logger = logger;
         }
 
-        [HttpGet("{ids}", Name = "GetAuthorsByIds")]
+        [HttpGet("{ids}", Name = "GetAuthorsByIdsV1")]
         [AllowAnonymous]
         public async Task<ActionResult<List<AuthorWithBooksDTO>>> Get([FromRoute] string ids)
         {
@@ -84,7 +84,7 @@ namespace LibraryAPI.Controllers
             foreach (var author in authors)
                 _logger.LogInformation("Author with ID {AuthorId} created successfully.", author.Id);
 
-            return CreatedAtRoute("GetAuthorsByIds", new { ids = IdsString }, authorsDTO);
+            return CreatedAtRoute("GetAuthorsByIdsV1", new { ids = IdsString }, authorsDTO);
         }
     }
 }

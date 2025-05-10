@@ -13,10 +13,10 @@ using System.Security.Claims;
 using System.Text;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace LibraryAPI.Controllers
+namespace LibraryAPI.Controllers.V1
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     public class UsersController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
@@ -29,16 +29,16 @@ namespace LibraryAPI.Controllers
         public UsersController(UserManager<User> userManager, IConfiguration configuration, SignInManager<User> signInManager, 
             IUsersService usersServicies, ApplicationDbContext applicationDbContext, IMapper mapper)
         {
-            this._userManager = userManager;
-            this._configuration = configuration;
-            this._signInManager = signInManager;
-            this._usersServicies = usersServicies;
-            this._applicationDbContext = applicationDbContext;
-            this._mapper = mapper;
+            _userManager = userManager;
+            _configuration = configuration;
+            _signInManager = signInManager;
+            _usersServicies = usersServicies;
+            _applicationDbContext = applicationDbContext;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        [Authorize("Admin")]
+        [Authorize("AdminV1")]
         public async Task<ActionResult<IEnumerable<UserDTO>>> Get()
         {
             var users = await _applicationDbContext.Users.ToListAsync();
@@ -46,7 +46,7 @@ namespace LibraryAPI.Controllers
             return Ok(usersDTO);
         }
 
-        [HttpPost("register")]
+        [HttpPost("registerV1")]
         public async Task<ActionResult<AuthenticationResponseDTO>> Register(UserCredentialsDTO userCredentialsDTO)
         {
             var user = new User
@@ -71,7 +71,7 @@ namespace LibraryAPI.Controllers
             }
         }
 
-        [HttpPost("login")]
+        [HttpPost("loginV1")]
         public async Task<ActionResult<AuthenticationResponseDTO>> Login(UserCredentialsDTO userCredentialsDTO)
         {
             var user = await _userManager.FindByEmailAsync(userCredentialsDTO.Email);
@@ -90,7 +90,7 @@ namespace LibraryAPI.Controllers
             }
         }
 
-        [HttpGet("refresh-token")]
+        [HttpGet("refresh-tokenV1")]
         [Authorize]
         public async Task<ActionResult<AuthenticationResponseDTO>> RefreshToken()
         {
@@ -108,7 +108,7 @@ namespace LibraryAPI.Controllers
             return Ok(authenticationResponse);
         }
 
-        [HttpPost("create-admin")]
+        [HttpPost("create-adminV1")]
         [Authorize(Policy = "SuperAdmin")]
         public async Task<ActionResult> CreateAdmin(ClaimUpdateDTO claimUpdateDTO)
         {
@@ -120,7 +120,7 @@ namespace LibraryAPI.Controllers
             return NoContent();
         }
 
-        [HttpPost("delete-admin")]
+        [HttpPost("delete-adminV1")]
         [Authorize(Policy = "SuperAdmin")]
         public async Task<ActionResult> DeleteAdmin(ClaimUpdateDTO claimUpdateDTO)
         {

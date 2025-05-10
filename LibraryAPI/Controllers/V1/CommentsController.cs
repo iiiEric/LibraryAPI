@@ -13,10 +13,10 @@ using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Xml.Linq;
 
-namespace LibraryAPI.Controllers
+namespace LibraryAPI.Controllers.V1
 {
     [ApiController]
-    [Route("api/books/{bookId:int}/[controller]")]
+    [Route("api/v1/books/{bookId:int}/[controller]")]
     [Authorize]
     public class CommentsController : ControllerBase
     {
@@ -29,11 +29,11 @@ namespace LibraryAPI.Controllers
 
         public CommentsController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger, IUsersService usersServicies, IOutputCacheStore outputCacheStore)
         {
-            this._context = context;
-            this._mapper = mapper;
-            this._logger = logger;
-            this._usersServicies = usersServicies;
-            this._outputCacheStore = outputCacheStore;
+            _context = context;
+            _mapper = mapper;
+            _logger = logger;
+            _usersServicies = usersServicies;
+            _outputCacheStore = outputCacheStore;
         }
 
         [HttpGet]
@@ -60,7 +60,7 @@ namespace LibraryAPI.Controllers
             return Ok(commentsDTO);
         }
 
-        [HttpGet("{id:guid}", Name = "GetComment")]
+        [HttpGet("{id:guid}", Name = "GetCommentV1")]
         [AllowAnonymous]
         [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<CommentDTO>> Get([FromRoute] Guid id)
@@ -116,7 +116,7 @@ namespace LibraryAPI.Controllers
             var commentDTO = _mapper.Map<CommentDTO>(comment);
 
             _logger.LogInformation("Comment with ID {CommentId} created successfully.", comment.Id);
-            return CreatedAtRoute("GetComment", new { id = comment.Id, bookId }, commentDTO);
+            return CreatedAtRoute("GetCommentV1", new { id = comment.Id, bookId }, commentDTO);
         }
 
         [HttpPatch("{id:guid}")]
