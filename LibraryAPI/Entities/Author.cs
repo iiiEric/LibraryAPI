@@ -1,4 +1,5 @@
 ﻿using LibraryAPI.Validation;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace LibraryAPI.Entities
@@ -23,6 +24,9 @@ namespace LibraryAPI.Entities
 
         [StringLength(20)]
         public string? Identity { get; set; }
+
+        [Unicode(false)]
+        public string? ImageUrl { get; set; }
 
         public List<AuthorBook> Books { get; set; } = [];
     }

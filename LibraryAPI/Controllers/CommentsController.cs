@@ -22,9 +22,9 @@ namespace LibraryAPI.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<BooksController> _logger;
-        private readonly IUsersServicies _usersServicies;
+        private readonly IUsersService _usersServicies;
 
-        public CommentsController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger, IUsersServicies usersServicies)
+        public CommentsController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger, IUsersService usersServicies)
         {
             this._context = context;
             this._mapper = mapper;

@@ -16,6 +16,9 @@ namespace LibraryAPI.Utils
                 .ForMember(dto => dto.FullName, config => config.MapFrom(ent => NameFormatter.GetAuthorFullName(ent)));
 
             CreateMap<AuthorCreationDTO, Author>();
+            CreateMap<AuthorCreationWithImageDTO, Author>()
+                .ForMember(ent => ent.ImageUrl, config => config.Ignore());
+
             CreateMap<Author, AuthorPatchDTO>().ReverseMap();
            
 

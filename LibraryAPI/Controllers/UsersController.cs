@@ -22,12 +22,12 @@ namespace LibraryAPI.Controllers
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
         private readonly SignInManager<User> _signInManager;
-        private readonly IUsersServicies _usersServicies;
+        private readonly IUsersService _usersServicies;
         private readonly ApplicationDbContext _applicationDbContext;
         private readonly IMapper _mapper;
 
         public UsersController(UserManager<User> userManager, IConfiguration configuration, SignInManager<User> signInManager, 
-            IUsersServicies usersServicies, ApplicationDbContext applicationDbContext, IMapper mapper)
+            IUsersService usersServicies, ApplicationDbContext applicationDbContext, IMapper mapper)
         {
             this._userManager = userManager;
             this._configuration = configuration;

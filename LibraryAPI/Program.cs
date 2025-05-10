@@ -40,9 +40,12 @@ builder.Services.AddIdentityCore<User>()
 
 builder.Services.AddScoped<UserManager<User>>();
 builder.Services.AddScoped<SignInManager<User>>();
-builder.Services.AddTransient<IUsersServicies, UsersServicies>();
+builder.Services.AddTransient<IUsersService, UsersService>();
 //Hash
 //builder.Services.AddTransient<IHashServicies, HashServicies>();
+
+builder.Services.AddTransient<IFileStorageService, AzureFileStorageService>();
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication().AddJwtBearer(options =>
 {

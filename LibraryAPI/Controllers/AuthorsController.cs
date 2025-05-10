@@ -2,6 +2,7 @@
 using LibraryAPI.Data;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
+using LibraryAPI.Services;
 using LibraryAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
@@ -19,12 +20,15 @@ namespace LibraryAPI.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthorsController> _logger;
+        private readonly IFileStorageService _fileStorageService;
+        private const string _container = "authors";
 
-        public AuthorsController(ApplicationDbContext context, IMapper mapper, ILogger<AuthorsController> logger)
+        public AuthorsController(ApplicationDbContext context, IMapper mapper, ILogger<AuthorsController> logger, IFileStorageService fileStorageService)
         {
             this._context = context;
             this._mapper = mapper;
             this._logger = logger;
+            this._fileStorageService = fileStorageService;
         }
 
         [HttpGet]
@@ -86,8 +90,27 @@ namespace LibraryAPI.Controllers
             return CreatedAtRoute("GetAuthor", new { id = author.Id }, authorDTO);
         }
 
+        [HttpPost("with-image")]
+        public async Task<ActionResult> PostWithImage([FromForm] AuthorCreationWithImageDTO authorCreationWithImageDTO)
+        {
+            var author = _mapper.Map<Author>(authorCreationWithImageDTO);
+
+            _logger.LogInformation("Creating author with name '{Name}'", author.Name);
+
+            if (authorCreationWithImageDTO.Image is not null)
+                author.ImageUrl = await _fileStorageService.Store(_container, authorCreationWithImageDTO.Image);
+
+            _context.Add(author);
+            await _context.SaveChangesAsync();
+
+            var authorDTO = _mapper.Map<AuthorDTO>(author);
+
+            _logger.LogInformation("Author with ID {AuthorId} created successfully.", author.Id);
+            return CreatedAtRoute("GetAuthor", new { id = author.Id }, authorDTO);
+        }
+
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put([FromRoute] int id, [FromBody] AuthorCreationDTO authorCreationDTO)
+        public async Task<ActionResult> Put([FromRoute] int id, [FromForm] AuthorCreationWithImageDTO authorCreationWithImageDTO)
         {
             var exists = await _context.Authors.AnyAsync(x => x.Id == id);
             if (!exists)
@@ -97,8 +120,19 @@ namespace LibraryAPI.Controllers
                 return ValidationProblem();
             }
 
-            var author = _mapper.Map<Author>(authorCreationDTO);
+            var author = _mapper.Map<Author>(authorCreationWithImageDTO);
             author.Id = id;
+
+            if (authorCreationWithImageDTO.Image is not null)
+            {
+                var currentImage = await _context.Authors
+                    .Where(x => x.Id == id)
+                    .Select(x => x.ImageUrl)
+                    .FirstOrDefaultAsync();
+
+                var imageUrl = await _fileStorageService.Update(currentImage, _container, authorCreationWithImageDTO.Image);
+                author.ImageUrl = imageUrl;
+            }
 
             _context.Update(author);
             await _context.SaveChangesAsync();
@@ -148,12 +182,17 @@ namespace LibraryAPI.Controllers
         {
             _logger.LogInformation("Attempting to delete author with ID {AuthorId}", id);
 
-            var recordsDeleted = await _context.Authors.Where(x => x.Id == id).ExecuteDeleteAsync();
-            if (recordsDeleted == 0)
+            var author = await _context.Authors.FirstOrDefaultAsync(x => x.Id == id);
+            if (author is null)
             {
                 _logger.LogWarning("Attempted to delete non-existing author with ID {AuthorId}", id);
-                return NotFound();
+                ModelState.AddModelError(nameof(id), "The provided ID does not match any existing author.");
+                return ValidationProblem();
             }
+
+            _context.Remove(author);
+            await _context.SaveChangesAsync();
+            await _fileStorageService.Delete(author.ImageUrl, _container);
 
             _logger.LogInformation("Author with ID {AuthorId} deleted successfully.", id);
             return NoContent();

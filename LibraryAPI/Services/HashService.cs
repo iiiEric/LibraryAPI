@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 
 namespace LibraryAPI.Services
 {
-    public class HashServicies : IHashServicies
+    public class HashService : IHashService
     {
         public HashResultDTO Hash(string input)
         {

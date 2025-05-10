@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace LibraryAPI.Services
 {
-    public interface IUsersServicies
+    public interface IUsersService
     {
         Task<User?> GetCurrentUser();
     }

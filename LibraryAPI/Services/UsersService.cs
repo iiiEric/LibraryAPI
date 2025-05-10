@@ -4,12 +4,12 @@ using System.Security.Claims;
 
 namespace LibraryAPI.Services
 {
-    public class UsersServicies : IUsersServicies
+    public class UsersService : IUsersService
     {
         private readonly UserManager<User> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UsersServicies(UserManager<User> userManager, IHttpContextAccessor httpContextAccessor)
+        public UsersService(UserManager<User> userManager, IHttpContextAccessor httpContextAccessor)
         {
             this._userManager = userManager;
             this._httpContextAccessor = httpContextAccessor;
