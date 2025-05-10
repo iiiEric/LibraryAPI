@@ -19,6 +19,13 @@ builder.Services.AddOutputCache(options =>
     options.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(15);
 });
 
+//distributed cache
+//builder.Services.AddStackExchangeRedisOutputCache(options =>
+//{
+//    options.Configuration = builder.Configuration["RedisConnection"];
+//    options.InstanceName = "LibraryAPI";
+//});
+
 //Encryption
 //builder.Services.AddDataProtection();
 
