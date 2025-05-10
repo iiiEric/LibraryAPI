@@ -11,6 +11,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 #region Services area
 
+#region Encryption
+builder.Services.AddDataProtection();
+#endregion
+
 #region CORS
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!;
 builder.Services.AddCors(options =>

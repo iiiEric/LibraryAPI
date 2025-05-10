@@ -3,6 +3,7 @@ using LibraryAPI.Data;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,12 +17,46 @@ namespace LibraryAPI.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<BooksController> _logger;
+        private readonly ITimeLimitedDataProtector _timeLimitedDataProtector;
 
-        public BooksController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger)
+        public BooksController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger, IDataProtectionProvider dataProtectionProvider)
         {
             this._context = context;
             this._mapper = mapper;
             this._logger = logger;
+            this._timeLimitedDataProtector = dataProtectionProvider.CreateProtector("BooksController").ToTimeLimitedDataProtector();
+        }
+
+        [HttpGet("collection/get-token")]
+        public ActionResult GetTokenForBookCollection()
+        {
+            var plainText = Guid.NewGuid().ToString();
+            var token = _timeLimitedDataProtector.Protect(plainText, lifetime: TimeSpan.FromDays(1));
+            var url = Url.RouteUrl("GetBookCollectionUsingToken", new { token }, "https");
+            return Ok(new { url });
+        }
+
+        [HttpGet("collection/{token}", Name = "GetBookCollectionUsingToken")]
+        [AllowAnonymous]
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetCollectionUsingToken(string token)
+        {
+            try
+            {
+                _timeLimitedDataProtector.Unprotect(token);
+            }
+            catch (Exception)
+            {
+                _logger.LogWarning("Token has expired.");
+                ModelState.AddModelError(nameof(token), "Token has expired.");
+                return ValidationProblem();
+            }
+
+            _logger.LogInformation("Retrieving all books.");
+
+            var books = await _context.Books.ToListAsync(); ;
+            var booksDTO = _mapper.Map<IEnumerable<BookDTO>>(books);
+
+            return Ok(booksDTO);
         }
 
         [HttpGet]
