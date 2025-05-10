@@ -109,27 +109,9 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter<ValidateBookFilter>]
         public async Task<ActionResult> Post([FromBody] BookCreationDTO bookCreationDTO)
         {
-            if (bookCreationDTO.AuthorsIds is null || bookCreationDTO.AuthorsIds.Count == 0)
-            {
-                _logger.LogWarning("Failed to create book. No authors provided.");
-                ModelState.AddModelError(nameof(bookCreationDTO.AuthorsIds), "At least one author ID is required.");
-                return ValidationProblem();
-            }
-
-            var existsAuthorsIds = await _context.Authors.Where(x => bookCreationDTO.AuthorsIds.Contains(x.Id))
-                .Select(x => x.Id)
-                .ToListAsync();
-            if (existsAuthorsIds.Count != bookCreationDTO.AuthorsIds.Count)
-            {
-                var authorsNotExists = bookCreationDTO.AuthorsIds.Except(existsAuthorsIds);
-                var authorsNotExistsString = string.Join(", ", authorsNotExists);
-                _logger.LogWarning("Failed to create book. Some author IDs not found: {AuthorsNotExistsIds}", authorsNotExistsString);
-                ModelState.AddModelError(nameof(bookCreationDTO.AuthorsIds), $"Some author IDs not found: {authorsNotExistsString}");
-                return ValidationProblem();
-            }
-
             var book = _mapper.Map<Book>(bookCreationDTO);
             assignAuthorsOrder(book);
 
@@ -157,28 +139,9 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [ServiceFilter<ValidateBookFilter>]
         public async Task<ActionResult> Put([FromRoute] int id, [FromBody] BookCreationDTO bookCreationDTO)
         {
-            if (bookCreationDTO.AuthorsIds is null || bookCreationDTO.AuthorsIds.Count == 0)
-            {
-                _logger.LogWarning("Failed to create book. No authors provided.");
-                ModelState.AddModelError(nameof(bookCreationDTO.AuthorsIds), "At least one author ID is required.");
-                return ValidationProblem();
-            }
-
-            var existsAuthorsIds = await _context.Authors
-                .Where(x => bookCreationDTO.AuthorsIds.Contains(x.Id))
-                .Select(x => x.Id)
-                .ToListAsync();
-            if (existsAuthorsIds.Count != bookCreationDTO.AuthorsIds.Count)
-            {
-                var authorsNotExists = bookCreationDTO.AuthorsIds.Except(existsAuthorsIds);
-                var authorsNotExistsString = string.Join(", ", authorsNotExists);
-                _logger.LogWarning("Failed to create book. Some author IDs do not exist: {AuthorsNotExistsIds}", authorsNotExistsString);
-                ModelState.AddModelError(nameof(bookCreationDTO.AuthorsIds), $"Some author IDs do not exist: {authorsNotExistsString}");
-                return ValidationProblem();
-            }
-
             var bookDB = await _context.Books
                 .Include(x => x.Authors)
                 .FirstOrDefaultAsync(x => x.Id == id);

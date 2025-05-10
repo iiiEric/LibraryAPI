@@ -3,6 +3,7 @@ using LibraryAPI.Entities;
 using LibraryAPI.Middlewares;
 using LibraryAPI.Services;
 using LibraryAPI.Swagger;
+using LibraryAPI.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +42,10 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddAutoMapper(typeof(Program));
 
-builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ExecutionTimeLogger>();
+}).AddNewtonsoftJson();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -57,6 +61,7 @@ builder.Services.AddTransient<IUsersService, UsersService>();
 //builder.Services.AddTransient<IHashServicies, HashServicies>();
 
 builder.Services.AddTransient<IFileStorageService, AzureFileStorageService>();
+builder.Services.AddScoped<ValidateBookFilter>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication().AddJwtBearer(options =>
