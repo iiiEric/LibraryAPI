@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
+using System.Linq.Dynamic.Core;
 
 namespace LibraryAPI.Controllers
 {
@@ -45,6 +46,65 @@ namespace LibraryAPI.Controllers
                 .ToListAsync();
             var authorsDTO = _mapper.Map<IEnumerable<AuthorDTO>>(authors);
             return Ok(authorsDTO);
+        }
+
+        [HttpGet("filter")]
+        [AllowAnonymous]
+        public async Task<ActionResult<IEnumerable<AuthorDTO>>> Filter([FromQuery] AuthorFilterDTO authorFilterDTO)
+        {
+            _logger.LogInformation("Retrieving all authors.");
+            var queryable = _context.Authors.AsQueryable();
+           
+            if (!string.IsNullOrEmpty(authorFilterDTO.Name))
+                queryable = queryable.Where(x => x.Name.Contains(authorFilterDTO.Name));
+
+            if (!string.IsNullOrEmpty(authorFilterDTO.Surname1))
+                queryable = queryable.Where(x => x.Name.Contains(authorFilterDTO.Surname1));
+
+            if (authorFilterDTO.HasImage.HasValue)
+            {
+                if (authorFilterDTO.HasImage.Value)
+                    queryable = queryable.Where(x => x.ImageUrl != null);
+                else
+                    queryable = queryable.Where(x => x.ImageUrl == null);
+            }
+
+            if (!string.IsNullOrEmpty(authorFilterDTO.BookTitle))
+                queryable = queryable.Where(x => x.Books.Any(y => y.Book!.Title.Contains(authorFilterDTO.BookTitle)));
+
+            if (authorFilterDTO.IncludeBooks)
+                queryable = queryable.Include(x => x.Books).ThenInclude(x => x.Book);
+
+            if (!string.IsNullOrEmpty(authorFilterDTO.SortBy))
+            {
+                var orderType = authorFilterDTO.SortAscending ? "ascending" : "descending";
+                try
+                {
+                    queryable = queryable.OrderBy($"{authorFilterDTO.SortBy} {orderType}");
+                }
+                catch (Exception ex)
+                {
+                    queryable = queryable.OrderBy(x => x.Name);
+                    _logger.LogError(ex, "Error ordering authors by {OrderType} on field {SortBy}", orderType, authorFilterDTO.SortBy);
+                }
+            }
+            else
+            {
+                queryable = queryable.OrderBy(x => x.Name);
+            }
+
+            var authors = await queryable.Paginate(authorFilterDTO.PaginationDTO).ToListAsync();
+
+            if (authorFilterDTO.IncludeBooks)
+            {
+                var authorsWithBooksDTO = _mapper.Map<IEnumerable<AuthorWithBooksDTO>>(authors);
+                return Ok(authorsWithBooksDTO);
+            }
+            else
+            {
+                var authorsDTO = _mapper.Map<IEnumerable<AuthorDTO>>(authors);
+                return Ok(authorsDTO);
+            }     
         }
 
         [HttpGet("{id:int}", Name = "GetAuthor")]
