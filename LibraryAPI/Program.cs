@@ -4,6 +4,7 @@ using LibraryAPI.Middlewares;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -41,6 +42,9 @@ builder.Services.AddIdentityCore<User>()
 builder.Services.AddScoped<UserManager<User>>();
 builder.Services.AddScoped<SignInManager<User>>();
 builder.Services.AddTransient<IUsersServicies, UsersServicies>();
+#region Hash
+builder.Services.AddTransient<IHashServicies, HashServicies>();
+#endregion
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication().AddJwtBearer(options =>
 {
