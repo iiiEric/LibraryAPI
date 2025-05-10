@@ -4,6 +4,7 @@ using LibraryAPI.Middlewares;
 using LibraryAPI.Services;
 using LibraryAPI.Swagger;
 using LibraryAPI.Utils;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -118,6 +119,28 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 #region Middleware area
+app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run(async context =>
+{
+    var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
+    var excepcion = exceptionHandlerFeature?.Error!;
+
+    var error = new Error()
+    {
+        ErrorMessage = excepcion.Message,
+        StrackTrace = excepcion.StackTrace,
+        OccurredAt = DateTime.UtcNow
+    };
+
+    var dbContext = context.RequestServices.GetRequiredService<ApplicationDbContext>();
+    dbContext.Add(error);
+    await dbContext.SaveChangesAsync();
+    await Results.InternalServerError(new
+    {
+        type = "Error",
+        message = "An unexpected error occurred",
+        status = 500
+    }).ExecuteAsync(context);
+}));
 
 app.UseSwagger();
 app.UseSwaggerUI();

@@ -21,5 +21,6 @@ namespace LibraryAPI.Data
         public DbSet<Book> Books { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<AuthorBook> AuthorsBooks { get; set; }
+        public DbSet<Error> Errors { get; set; }
     }
 }
