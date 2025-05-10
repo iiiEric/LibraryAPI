@@ -23,7 +23,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowOrigins",
         builder =>
         {
-            builder.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader();
+            builder.WithOrigins(allowedOrigins).AllowAnyMethod().WithExposedHeaders("total-number-of-records");
         });
 });
 

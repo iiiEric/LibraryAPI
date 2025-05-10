@@ -2,6 +2,7 @@
 using LibraryAPI.Data;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
+using LibraryAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
@@ -61,11 +62,17 @@ namespace LibraryAPI.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<BookDTO>>> Get()
+        public async Task<ActionResult<IEnumerable<BookDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
             _logger.LogInformation("Retrieving all books.");
 
-            var books = await _context.Books.ToListAsync(); ;
+            var queryable = _context.Books.AsQueryable();
+            await HttpContext.InsertHeaderPaginationParameters(queryable);
+
+            var books = await queryable
+                .OrderBy(x => x.Title)
+                .Paginate(paginationDTO)
+                .ToListAsync();
             var booksDTO = _mapper.Map<IEnumerable<BookDTO>>(books);
 
             return Ok(booksDTO);
