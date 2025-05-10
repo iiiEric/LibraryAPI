@@ -2,6 +2,7 @@
 using LibraryAPI.Data;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace LibraryAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Policy = "Admin")]
     public class AuthorsCollectionController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -23,6 +25,7 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpGet("{ids}", Name = "GetAuthorsByIds")]
+        [AllowAnonymous]
         public async Task<ActionResult<List<AuthorWithBooksDTO>>> Get([FromRoute] string ids)
         {
             _logger.LogInformation("Retrieving authors with IDs {AuthorsIds}", ids);

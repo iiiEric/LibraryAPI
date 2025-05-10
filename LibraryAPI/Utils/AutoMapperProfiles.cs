@@ -10,17 +10,17 @@ namespace LibraryAPI.Utils
         public AutoMapperProfiles()
         {
             CreateMap<Author, AuthorDTO>()
-                .ForMember(dto => dto.FullName, config => config.MapFrom(author => NameFormatter.GetAuthorFullName(author)));
+                .ForMember(dto => dto.FullName, config => config.MapFrom(ent => NameFormatter.GetAuthorFullName(ent)));
 
             CreateMap<Author, AuthorWithBooksDTO>()
-                .ForMember(dto => dto.FullName, config => config.MapFrom(author => NameFormatter.GetAuthorFullName(author)));
+                .ForMember(dto => dto.FullName, config => config.MapFrom(ent => NameFormatter.GetAuthorFullName(ent)));
 
             CreateMap<AuthorCreationDTO, Author>();
             CreateMap<Author, AuthorPatchDTO>().ReverseMap();
            
 
             CreateMap<Book, BookDTO>()
-                .ForMember(dto => dto.Title, config => config.MapFrom(book => book.Title));
+                .ForMember(dto => dto.Title, config => config.MapFrom(ent => ent.Title));
 
             CreateMap<Book, BookWithAuthorsDTO>();
 
@@ -41,8 +41,11 @@ namespace LibraryAPI.Utils
 
 
             CreateMap<CommentCreationDTO, Comment>();
-            CreateMap<Comment, CommentDTO>();
+            CreateMap<Comment, CommentDTO>()
+                .ForMember(dto => dto.UserEmail, config => config.MapFrom(ent => ent.User!.Email));
             CreateMap<CommentPatchDTO, Comment>().ReverseMap();
+
+            CreateMap<User, UserDTO>();
         }
     }
 }

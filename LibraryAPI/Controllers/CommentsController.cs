@@ -2,6 +2,8 @@
 using LibraryAPI.Data;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
+using LibraryAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,20 +16,24 @@ namespace LibraryAPI.Controllers
 {
     [ApiController]
     [Route("api/books/{bookId:int}/[controller]")]
+    [Authorize]
     public class CommentsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<BooksController> _logger;
+        private readonly IUsersServicies _usersServicies;
 
-        public CommentsController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger)
+        public CommentsController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger, IUsersServicies usersServicies)
         {
             this._context = context;
             this._mapper = mapper;
             this._logger = logger;
+            this._usersServicies = usersServicies;
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<List<CommentDTO>>> Get(int bookId)
         {
             _logger.LogInformation("Retrieving all comments of the book {BookId}", bookId);
@@ -40,6 +46,7 @@ namespace LibraryAPI.Controllers
             }
 
             var comments = await _context.Comments
+                .Include(x => x.User)
                 .Where(x => x.BookId == bookId)
                 .OrderByDescending(x => x.PublicationDate)
                 .ToListAsync();
@@ -49,11 +56,14 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpGet("{id:guid}", Name = "GetComment")]
+        [AllowAnonymous]
         public async Task<ActionResult<CommentDTO>> Get([FromRoute] Guid id)
         {
             _logger.LogInformation("Retrieving comment with ID {CommentId}", id);
 
-            var comment = await _context.Comments.FirstOrDefaultAsync(x => x.Id == id);
+            var comment = await _context.Comments
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (comment is null)
             {
@@ -80,9 +90,19 @@ namespace LibraryAPI.Controllers
                 return ValidationProblem();
             }
 
+            var user = await _usersServicies.GetCurrentUser();
+            //Unnecessary by having the [Authorize]
+            //if (user is null)
+            //{
+            //    _logger.LogWarning("User not found.");
+            //    ModelState.AddModelError(string.Empty, "User not found.");
+            //    return ValidationProblem();
+            //}
+
             var comment = _mapper.Map<Comment>(commentCreationDTO);
             comment.BookId = bookId;
             comment.PublicationDate = DateTime.UtcNow;
+            comment.UserId = user!.Id;
             _context.Add(comment);
             await _context.SaveChangesAsync();
 
@@ -112,15 +132,30 @@ namespace LibraryAPI.Controllers
                 return ValidationProblem();
             }
 
-            var commentDB = await _context.Comments.FirstOrDefaultAsync(x => x.Id == id);
-            if (commentDB is null)
+            var comment = await _context.Comments.FirstOrDefaultAsync(x => x.Id == id);
+            if (comment is null)
             {
                 _logger.LogWarning("PATCH request failed: comment with ID {CommentId} not found.", id);
                 ModelState.AddModelError(nameof(id), $"Comment with ID {id} not found.");
                 return ValidationProblem();
             }
 
-            var commentPatchDTO = _mapper.Map<CommentPatchDTO>(commentDB);
+            var user = await _usersServicies.GetCurrentUser();
+            //Unnecessary by having the [Authorize]
+            //if (user is null)
+            //{
+            //    _logger.LogWarning("User not found.");
+            //    ModelState.AddModelError(string.Empty, "User not found.");
+            //    return ValidationProblem();
+            //}
+
+            if (user!.Id != comment.UserId)
+            {
+                _logger.LogWarning("User with ID {UserId} is not authorized to modify comment with ID {CommentId} of user {CommentUserId}.", user.Id, id, comment.UserId);
+                return Forbid();
+            }
+
+            var commentPatchDTO = _mapper.Map<CommentPatchDTO>(comment);
             patchDocument.ApplyTo(commentPatchDTO, ModelState);
 
             var isValid = TryValidateModel(commentPatchDTO);
@@ -130,7 +165,7 @@ namespace LibraryAPI.Controllers
                 return ValidationProblem();
             }
 
-            _mapper.Map(commentPatchDTO, commentDB);
+            _mapper.Map(commentPatchDTO, comment);
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("Comment with ID {CommentId} patched successfully.", id);
@@ -150,12 +185,30 @@ namespace LibraryAPI.Controllers
                 return ValidationProblem();
             }
 
-            var recordsDeleted = await _context.Comments.Where(x => x.Id == id).ExecuteDeleteAsync();
-            if (recordsDeleted == 0)
+            var user = await _usersServicies.GetCurrentUser();
+            //Unnecessary by having the [Authorize]
+            //if (user is null)
+            //{
+            //    _logger.LogWarning("User not found.");
+            //    ModelState.AddModelError(string.Empty, "User not found.");
+            //    return ValidationProblem();
+            //}
+
+            var comment = await _context.Comments.FirstOrDefaultAsync(x => x.Id == id);
+            if (comment is null)
             {
                 _logger.LogWarning("Attempted to delete non-existing comment with ID {CommentId}", id);
                 return NotFound();
             }
+
+            if (user!.Id != comment.UserId)
+            {
+                _logger.LogWarning("User with ID {UserId} is not authorized to modify comment with ID {CommentId} of user {CommentUserId}.", user.Id, id, comment.UserId);
+                return Forbid();
+            }
+
+            _context.Remove(comment);
+            await _context.SaveChangesAsync();
 
             _logger.LogInformation("Comment with ID {CommentId} deleted successfully.", id);
             return NoContent();
