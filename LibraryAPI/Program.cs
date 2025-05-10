@@ -2,21 +2,21 @@ using LibraryAPI.Data;
 using LibraryAPI.Entities;
 using LibraryAPI.Middlewares;
 using LibraryAPI.Services;
+using LibraryAPI.Swagger;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 #region Services area
 
-#region Encryption
+//Encryption
 builder.Services.AddDataProtection();
-#endregion
 
-#region CORS
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!;
 builder.Services.AddCors(options =>
 {
@@ -26,7 +26,6 @@ builder.Services.AddCors(options =>
             builder.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader();
         });
 });
-#endregion
 
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -64,15 +63,47 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("SuperAdmin", policy => policy.RequireClaim("SuperAdmin"));
     options.AddPolicy("Admin", policy => policy.RequireClaim("Admin"));
 });
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "Library API",
+        Description = "Library API for managing books and authors",
+        Contact = new OpenApiContact
+        {
+            Name = "Eric Campos Domínguez",
+            Url = new Uri("https://eric-campos.netlify.app/")
+        },
+        License = new OpenApiLicense
+        {
+            Name = "MIT",
+            Url = new Uri("https://opensource.org/licenses/MIT")
+        }
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header
+    });
+
+    options.OperationFilter<AuthorizationFilter>();
+});
 #endregion
 
 var app = builder.Build();
 
 #region Middleware area
 
-#region CORS
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseCors("AllowOrigins");
-#endregion
 
 app.UseLogRequest();
 

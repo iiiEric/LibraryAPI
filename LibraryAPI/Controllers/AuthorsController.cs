@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
 
 namespace LibraryAPI.Controllers
 {
@@ -37,7 +38,11 @@ namespace LibraryAPI.Controllers
 
         [HttpGet("{id:int}", Name = "GetAuthor")]
         [AllowAnonymous]
-        public async Task<ActionResult<AuthorWithBooksDTO>> Get([FromRoute] int id)
+        [EndpointSummary("Retrieves an author by their unique identifier.")]
+        [EndpointDescription("Include his/her books. If the author does not exist, returns 404")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<AuthorWithBooksDTO>> Get([FromRoute] [Description("Author Id")] int id)
         {
             _logger.LogInformation("Retrieving author with ID {AuthorId}", id);
 
