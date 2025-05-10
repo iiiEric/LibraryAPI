@@ -6,6 +6,7 @@ using LibraryAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryAPI.Controllers
@@ -19,13 +20,17 @@ namespace LibraryAPI.Controllers
         private readonly IMapper _mapper;
         private readonly ILogger<BooksController> _logger;
         //private readonly ITimeLimitedDataProtector _timeLimitedDataProtector;
+        private readonly IOutputCacheStore _outputCacheStore;
+        private const string _cache = "BooksCache";
 
-        public BooksController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger/*, IDataProtectionProvider dataProtectionProvider*/)
+        public BooksController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger/*, IDataProtectionProvider dataProtectionProvider*/,
+            IOutputCacheStore outputCacheStore)
         {
             this._context = context;
             this._mapper = mapper;
             this._logger = logger;
             //this._timeLimitedDataProtector = dataProtectionProvider.CreateProtector("BooksController").ToTimeLimitedDataProtector();
+            this._outputCacheStore = outputCacheStore;
         }
 
         //[HttpGet("collection/get-token")]
@@ -62,6 +67,7 @@ namespace LibraryAPI.Controllers
 
         [HttpGet]
         [AllowAnonymous]
+        [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<IEnumerable<BookDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
             _logger.LogInformation("Retrieving all books.");
@@ -80,6 +86,7 @@ namespace LibraryAPI.Controllers
 
         [HttpGet("{id:int}", Name = "GetBook")]
         [AllowAnonymous]
+        [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<BookWithAuthorsDTO>> Get([FromRoute] int id)
         {
             _logger.LogInformation("Retrieving book with ID {BookId}", id);
@@ -130,6 +137,7 @@ namespace LibraryAPI.Controllers
 
             _context.Add(book);
             await _context.SaveChangesAsync();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
 
             var bookDTO = _mapper.Map<BookDTO>(book);
 
@@ -186,6 +194,7 @@ namespace LibraryAPI.Controllers
 
             _context.Update(bookDB);
             await _context.SaveChangesAsync();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
 
             _logger.LogInformation("Book with ID {BookId} updated successfully.", id);
             return NoContent();
@@ -202,6 +211,8 @@ namespace LibraryAPI.Controllers
                 _logger.LogWarning("Attempted to delete non-existing book with ID {BookId}", id);
                 return NotFound();
             }
+            else
+                await _outputCacheStore.EvictByTagAsync(_cache, default);
 
             _logger.LogInformation("Book with ID {BookId} deleted successfully.", id);
             return NoContent();

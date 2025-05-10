@@ -7,6 +7,7 @@ using LibraryAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 using System.Linq.Dynamic.Core;
@@ -22,18 +23,23 @@ namespace LibraryAPI.Controllers
         private readonly IMapper _mapper;
         private readonly ILogger<AuthorsController> _logger;
         private readonly IFileStorageService _fileStorageService;
-        private const string _container = "authors";
+        private readonly IOutputCacheStore _outputCacheStore;
+        private const string _container = "Authors";
+        private const string _cache = "AuthorsCache";
 
-        public AuthorsController(ApplicationDbContext context, IMapper mapper, ILogger<AuthorsController> logger, IFileStorageService fileStorageService)
+        public AuthorsController(ApplicationDbContext context, IMapper mapper, ILogger<AuthorsController> logger, IFileStorageService fileStorageService, 
+            IOutputCacheStore outputCacheStore)
         {
             this._context = context;
             this._mapper = mapper;
             this._logger = logger;
             this._fileStorageService = fileStorageService;
+            this._outputCacheStore = outputCacheStore;
         }
 
         [HttpGet]
         [AllowAnonymous]
+        [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<IEnumerable<AuthorDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
             _logger.LogInformation("Retrieving all authors.");
@@ -113,6 +119,7 @@ namespace LibraryAPI.Controllers
         [EndpointDescription("Include his/her books. If the author does not exist, returns 404")]
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<AuthorWithBooksDTO>> Get([FromRoute] [Description("Author Id")] int id)
         {
             _logger.LogInformation("Retrieving author with ID {AuthorId}", id);
@@ -143,6 +150,7 @@ namespace LibraryAPI.Controllers
 
             _context.Add(author);
             await _context.SaveChangesAsync();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
 
             var authorDTO = _mapper.Map<AuthorDTO>(author);
 
@@ -162,6 +170,7 @@ namespace LibraryAPI.Controllers
 
             _context.Add(author);
             await _context.SaveChangesAsync();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
 
             var authorDTO = _mapper.Map<AuthorDTO>(author);
 
@@ -196,6 +205,7 @@ namespace LibraryAPI.Controllers
 
             _context.Update(author);
             await _context.SaveChangesAsync();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
             _logger.LogInformation("Author with ID {AuthorId} updated successfully.", id);
             return NoContent();
         }
@@ -232,6 +242,7 @@ namespace LibraryAPI.Controllers
 
             _mapper.Map(authorPatchDTO, authorDB);
             await _context.SaveChangesAsync();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
 
             _logger.LogInformation("Author with ID {AuthorId} patched successfully.", id);
             return NoContent();
@@ -252,6 +263,7 @@ namespace LibraryAPI.Controllers
 
             _context.Remove(author);
             await _context.SaveChangesAsync();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
             await _fileStorageService.Delete(author.ImageUrl, _container);
 
             _logger.LogInformation("Author with ID {AuthorId} deleted successfully.", id);

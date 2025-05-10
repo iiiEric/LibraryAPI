@@ -6,6 +6,7 @@ using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
@@ -23,17 +24,21 @@ namespace LibraryAPI.Controllers
         private readonly IMapper _mapper;
         private readonly ILogger<BooksController> _logger;
         private readonly IUsersService _usersServicies;
+        private readonly IOutputCacheStore _outputCacheStore;
+        private const string _cache = "CommentsCache";
 
-        public CommentsController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger, IUsersService usersServicies)
+        public CommentsController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger, IUsersService usersServicies, IOutputCacheStore outputCacheStore)
         {
             this._context = context;
             this._mapper = mapper;
             this._logger = logger;
             this._usersServicies = usersServicies;
+            this._outputCacheStore = outputCacheStore;
         }
 
         [HttpGet]
         [AllowAnonymous]
+        [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<List<CommentDTO>>> Get(int bookId)
         {
             _logger.LogInformation("Retrieving all comments of the book {BookId}", bookId);
@@ -57,6 +62,7 @@ namespace LibraryAPI.Controllers
 
         [HttpGet("{id:guid}", Name = "GetComment")]
         [AllowAnonymous]
+        [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<CommentDTO>> Get([FromRoute] Guid id)
         {
             _logger.LogInformation("Retrieving comment with ID {CommentId}", id);
@@ -105,6 +111,7 @@ namespace LibraryAPI.Controllers
             comment.UserId = user!.Id;
             _context.Add(comment);
             await _context.SaveChangesAsync();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
 
             var commentDTO = _mapper.Map<CommentDTO>(comment);
 
@@ -167,6 +174,7 @@ namespace LibraryAPI.Controllers
 
             _mapper.Map(commentPatchDTO, comment);
             await _context.SaveChangesAsync();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
 
             _logger.LogInformation("Comment with ID {CommentId} patched successfully.", id);
             return NoContent();
@@ -210,6 +218,7 @@ namespace LibraryAPI.Controllers
             comment.IsDeleted = true;
             _context.Update(comment);
             await _context.SaveChangesAsync();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
 
             _logger.LogInformation("Comment with ID {CommentId} deleted successfully.", id);
             return NoContent();
