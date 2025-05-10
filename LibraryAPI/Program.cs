@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 #region Services area
 
 //Encryption
-builder.Services.AddDataProtection();
+//builder.Services.AddDataProtection();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!;
 builder.Services.AddCors(options =>
@@ -41,9 +41,8 @@ builder.Services.AddIdentityCore<User>()
 builder.Services.AddScoped<UserManager<User>>();
 builder.Services.AddScoped<SignInManager<User>>();
 builder.Services.AddTransient<IUsersServicies, UsersServicies>();
-#region Hash
-builder.Services.AddTransient<IHashServicies, HashServicies>();
-#endregion
+//Hash
+//builder.Services.AddTransient<IHashServicies, HashServicies>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication().AddJwtBearer(options =>
 {
