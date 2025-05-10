@@ -10,6 +10,19 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 #region Services area
+
+#region CORS
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!;
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowOrigins",
+        builder =>
+        {
+            builder.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader();
+        });
+});
+#endregion
+
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddControllers().AddNewtonsoftJson();
@@ -48,6 +61,11 @@ builder.Services.AddAuthorization(options =>
 var app = builder.Build();
 
 #region Middleware area
+
+#region CORS
+app.UseCors("AllowOrigins");
+#endregion
+
 app.UseLogRequest();
 
 app.MapControllers();
