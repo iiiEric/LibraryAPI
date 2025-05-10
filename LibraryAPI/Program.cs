@@ -46,6 +46,7 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<ExecutionTimeLogger>();
+    options.Conventions.Add(new ApiVersioningConvention());
 }).AddNewtonsoftJson();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -84,24 +85,28 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Admin", policy => policy.RequireClaim("Admin"));
 });
 
+var apiVersions = new[] { "v1" };
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo
+    foreach (var version in apiVersions)
     {
-        Version = "v1",
-        Title = "Library API",
-        Description = "Library API for managing books and authors",
-        Contact = new OpenApiContact
+        options.SwaggerDoc(version, new OpenApiInfo
         {
-            Name = "Eric Campos Domínguez",
-            Url = new Uri("https://eric-campos.netlify.app/")
-        },
-        License = new OpenApiLicense
-        {
-            Name = "MIT",
-            Url = new Uri("https://opensource.org/licenses/MIT")
-        }
-    });
+            Version = version,
+            Title = "Library API",
+            Description = "Library API for managing books and authors",
+            Contact = new OpenApiContact
+            {
+                Name = "Eric Campos Domínguez",
+                Url = new Uri("https://eric-campos.netlify.app/")
+            },
+            License = new OpenApiLicense
+            {
+                Name = "MIT",
+                Url = new Uri("https://opensource.org/licenses/MIT")
+            }
+        });
+    }
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -143,7 +148,11 @@ app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run(async con
 }));
 
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(options =>
+{
+    foreach (var version in apiVersions)
+        options.SwaggerEndpoint($"/swagger/{version}/swagger.json", $"Library API {version.ToUpper()}");
+});
 
 app.UseCors("AllowOrigins");
 
