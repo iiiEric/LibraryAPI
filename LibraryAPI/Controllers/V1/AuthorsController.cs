@@ -37,7 +37,7 @@ namespace LibraryAPI.Controllers.V1
             _outputCacheStore = outputCacheStore;
         }
 
-        [HttpGet]
+        [HttpGet(Name = "GetAuthorsV1")]
         [AllowAnonymous]
         [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<IEnumerable<AuthorDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
@@ -54,7 +54,7 @@ namespace LibraryAPI.Controllers.V1
             return Ok(authorsDTO);
         }
 
-        [HttpGet("filterV1")]
+        [HttpGet("filterV1", Name = "filterAuthorsV1")]
         [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<AuthorDTO>>> Filter([FromQuery] AuthorFilterDTO authorFilterDTO)
         {
@@ -141,7 +141,7 @@ namespace LibraryAPI.Controllers.V1
             return Ok(authorWithBooksDTO);
         }
 
-        [HttpPost]
+        [HttpPost(Name = "CreateAuthorV1")]
         public async Task<ActionResult> Post([FromBody] AuthorCreationDTO authorCreationDTO)
         {
             var author = _mapper.Map<Author>(authorCreationDTO);
@@ -158,7 +158,7 @@ namespace LibraryAPI.Controllers.V1
             return CreatedAtRoute("GetAuthorV1", new { id = author.Id }, authorDTO);
         }
 
-        [HttpPost("with-image")]
+        [HttpPost("with-image", Name = "CreateAuthorWithImageV1")]
         public async Task<ActionResult> PostWithImage([FromForm] AuthorCreationWithImageDTO authorCreationWithImageDTO)
         {
             var author = _mapper.Map<Author>(authorCreationWithImageDTO);
@@ -178,7 +178,7 @@ namespace LibraryAPI.Controllers.V1
             return CreatedAtRoute("GetAuthorV1", new { id = author.Id }, authorDTO);
         }
 
-        [HttpPut("{id:int}")]
+        [HttpPut("{id:int}", Name = "UpdateAuthorV1")]
         public async Task<ActionResult> Put([FromRoute] int id, [FromForm] AuthorCreationWithImageDTO authorCreationWithImageDTO)
         {
             var exists = await _context.Authors.AnyAsync(x => x.Id == id);
@@ -210,7 +210,7 @@ namespace LibraryAPI.Controllers.V1
             return NoContent();
         }
 
-        [HttpPatch("{id:int}")]
+        [HttpPatch("{id:int}", Name = "PatchAuthorV1")]
         public async Task<ActionResult> Patch([FromRoute] int id, [FromBody] JsonPatchDocument<AuthorPatchDTO> patchDocument)
         {
             _logger.LogInformation("Received PATCH request for author with ID {AuthorId}.", id);
@@ -248,7 +248,7 @@ namespace LibraryAPI.Controllers.V1
             return NoContent();
         }
 
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id:int}", Name = "DeleteAuthorV1")]
         public async Task<ActionResult> Delete([FromRoute] int id)
         {
             _logger.LogInformation("Attempting to delete author with ID {AuthorId}", id);

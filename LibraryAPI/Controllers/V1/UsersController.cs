@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using LibraryAPI.Data;
-using LibraryAPI.DTOs;
+using LibraryAPI.DTOs.Users;
 using LibraryAPI.Entities;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -37,7 +37,7 @@ namespace LibraryAPI.Controllers.V1
             _mapper = mapper;
         }
 
-        [HttpGet]
+        [HttpGet(Name = "GetUsersV1")]
         [Authorize("AdminV1")]
         public async Task<ActionResult<IEnumerable<UserDTO>>> Get()
         {
@@ -46,7 +46,7 @@ namespace LibraryAPI.Controllers.V1
             return Ok(usersDTO);
         }
 
-        [HttpPost("registerV1")]
+        [HttpPost("registerV1", Name = "RegisterUserV1")]
         public async Task<ActionResult<AuthenticationResponseDTO>> Register(UserCredentialsDTO userCredentialsDTO)
         {
             var user = new User
@@ -71,7 +71,7 @@ namespace LibraryAPI.Controllers.V1
             }
         }
 
-        [HttpPost("loginV1")]
+        [HttpPost("loginV1", Name = "LoginUserV1")]
         public async Task<ActionResult<AuthenticationResponseDTO>> Login(UserCredentialsDTO userCredentialsDTO)
         {
             var user = await _userManager.FindByEmailAsync(userCredentialsDTO.Email);
@@ -90,7 +90,7 @@ namespace LibraryAPI.Controllers.V1
             }
         }
 
-        [HttpGet("refresh-tokenV1")]
+        [HttpGet("refresh-tokenV1", Name = "RefreshTokenUserV1")]
         [Authorize]
         public async Task<ActionResult<AuthenticationResponseDTO>> RefreshToken()
         {
@@ -108,7 +108,7 @@ namespace LibraryAPI.Controllers.V1
             return Ok(authenticationResponse);
         }
 
-        [HttpPost("create-adminV1")]
+        [HttpPost("create-adminV1", Name = "CreateAdminUserV1")]
         [Authorize(Policy = "SuperAdmin")]
         public async Task<ActionResult> CreateAdmin(ClaimUpdateDTO claimUpdateDTO)
         {
@@ -120,7 +120,7 @@ namespace LibraryAPI.Controllers.V1
             return NoContent();
         }
 
-        [HttpPost("delete-adminV1")]
+        [HttpPost("delete-adminV1", Name = "DeleteAdminUserV1")]
         [Authorize(Policy = "SuperAdmin")]
         public async Task<ActionResult> DeleteAdmin(ClaimUpdateDTO claimUpdateDTO)
         {
@@ -132,7 +132,7 @@ namespace LibraryAPI.Controllers.V1
             return NoContent();
         }
 
-        [HttpPut]
+        [HttpPut(Name = "UpdateUserV1")]
         [Authorize]
         public async Task<ActionResult> Put(UserUpdateDTO userUpdateDTO)
         {
@@ -145,6 +145,8 @@ namespace LibraryAPI.Controllers.V1
             await _userManager.UpdateAsync(user);
             return NoContent(); 
         }
+
+        #region private methods
 
         private ActionResult ReturnIncorrectLogin()
         {
@@ -183,5 +185,7 @@ namespace LibraryAPI.Controllers.V1
                 Expiration = expiration
             };
         }
+
+        #endregion
     }
 }

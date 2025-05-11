@@ -36,7 +36,7 @@ namespace LibraryAPI.Controllers.V1
             _outputCacheStore = outputCacheStore;
         }
 
-        [HttpGet]
+        [HttpGet(Name = "GetCommentsV1")]
         [AllowAnonymous]
         [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<List<CommentDTO>>> Get(int bookId)
@@ -83,7 +83,7 @@ namespace LibraryAPI.Controllers.V1
             return Ok(commentDTO);
         }
 
-        [HttpPost]
+        [HttpPost(Name = "CreateCommentV1")]
         public async Task<ActionResult> Post(int bookId, [FromBody] CommentCreationDTO commentCreationDTO)
         {
             _logger.LogInformation("Creating comment for book ID {BookId}", bookId);
@@ -119,7 +119,7 @@ namespace LibraryAPI.Controllers.V1
             return CreatedAtRoute("GetCommentV1", new { id = comment.Id, bookId }, commentDTO);
         }
 
-        [HttpPatch("{id:guid}")]
+        [HttpPatch("{id:guid}", Name = "PatchCommentV1")]
         public async Task<ActionResult> Patch([FromRoute] Guid id, int bookId, [FromBody] JsonPatchDocument<CommentPatchDTO> patchDocument)
         {
             _logger.LogInformation("Received PATCH request for comment with ID {CommentId}.", id);
@@ -180,7 +180,7 @@ namespace LibraryAPI.Controllers.V1
             return NoContent();
         }
 
-        [HttpDelete("{id:guid}")]
+        [HttpDelete("{id:guid}", Name = "DeleteCommentV1")]
         public async Task<ActionResult> Delete([FromRoute] Guid id, int bookId)
         {
             _logger.LogInformation("Attempting to delete comment with ID {CommentId}", id);

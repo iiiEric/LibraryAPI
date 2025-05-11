@@ -1,4 +1,4 @@
-﻿namespace LibraryAPI.DTOs
+﻿namespace LibraryAPI.DTOs.Users
 {
     public class AuthenticationResponseDTO
     {

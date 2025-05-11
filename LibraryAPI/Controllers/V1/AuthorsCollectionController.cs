@@ -66,7 +66,7 @@ namespace LibraryAPI.Controllers.V1
             return Ok(authorsWithBooksDTO);
         }
 
-        [HttpPost]
+        [HttpPost(Name = "CreateAuthorsV1")]
         public async Task<ActionResult> Post([FromBody] IEnumerable<AuthorCreationDTO> authorsCreationDTO)
         {
             var authors = _mapper.Map<IEnumerable<Author>>(authorsCreationDTO);

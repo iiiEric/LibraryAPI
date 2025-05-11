@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using LibraryAPI.DTOs;
+using LibraryAPI.DTOs.Users;
 using LibraryAPI.Entities;
 using LibraryAPI.Utils;
 

@@ -42,7 +42,7 @@ namespace LibraryAPI.Controllers.V1
         //    return Ok(new { url });
         //}
 
-        //[HttpGet("collection/{token}V1", Name = "GetBookCollectionUsingToken")]
+        //[HttpGet("collection/{token}V1", Name = "GetBookCollectionUsingTokenV1")]
         //[AllowAnonymous]
         //public async Task<ActionResult<IEnumerable<BookDTO>>> GetCollectionUsingToken(string token)
         //{
@@ -65,7 +65,7 @@ namespace LibraryAPI.Controllers.V1
         //    return Ok(booksDTO);
         //}
 
-        [HttpGet]
+        [HttpGet(Name = "GetBooksV1")]
         [AllowAnonymous]
         [OutputCache(Tags = [_cache])]
         public async Task<ActionResult<IEnumerable<BookDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
@@ -108,7 +108,7 @@ namespace LibraryAPI.Controllers.V1
             return Ok(bookWithAuthorDTO);
         }
 
-        [HttpPost]
+        [HttpPost(Name = "CreateBookV1")]
         [ServiceFilter<ValidateBookFilter>]
         public async Task<ActionResult> Post([FromBody] BookCreationDTO bookCreationDTO)
         {
@@ -138,7 +138,7 @@ namespace LibraryAPI.Controllers.V1
             }
         }
 
-        [HttpPut("{id:int}")]
+        [HttpPut("{id:int}", Name = "UpdateBookV1")]
         [ServiceFilter<ValidateBookFilter>]
         public async Task<ActionResult> Put([FromRoute] int id, [FromBody] BookCreationDTO bookCreationDTO)
         {
@@ -163,7 +163,7 @@ namespace LibraryAPI.Controllers.V1
             return NoContent();
         }
 
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id:int}", Name = "DeleteBookV1")]
         public async Task<ActionResult> Delete([FromRoute] int id)
         {
             _logger.LogInformation("Attempting to delete book with ID {BookId}", id);

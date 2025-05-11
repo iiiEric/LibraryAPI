@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LibraryAPI.DTOs
+namespace LibraryAPI.DTOs.Users
 {
     public class UserCredentialsDTO
     {
