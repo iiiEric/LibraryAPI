@@ -164,3 +164,5 @@ app.MapControllers();
 #endregion
 
 app.Run();
+
+public partial class Program { }

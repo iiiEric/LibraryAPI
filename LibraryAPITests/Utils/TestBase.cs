@@ -8,25 +8,18 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Json;
 using System.Security.Claims;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using LibraryAPI.DTOs.Users;
+using LibraryAPITests.Utils;
 
 namespace LibraryAPITests.Utilidades
 {
     public class TestBase
     {
-        protected readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        protected readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-        protected readonly Claim adminClaim = new Claim("Admin", "1");
+        protected readonly Claim _adminClaim = new Claim("Admin", "1");
 
         protected ApplicationDbContext BuildContext(string databaseName)
         {
@@ -44,36 +37,36 @@ namespace LibraryAPITests.Utilidades
             return config.CreateMapper();
         }
 
-        //protected WebApplicationFactory<Program> BuildWebApplicationFactory(string databaseName, bool ignoreSecurity = true)
-        //{
-        //    var factory = new WebApplicationFactory<Program>();
+        protected WebApplicationFactory<Program> BuildWebApplicationFactory(string databaseName, bool ignoreSecurity = true)
+        {
+            var factory = new WebApplicationFactory<Program>();
 
-        //    factory = factory.WithWebHostBuilder(builder =>
-        //    {
-        //        builder.ConfigureTestServices(services =>
-        //        {
-        //            ServiceDescriptor descriptorDBContext = services.SingleOrDefault(d => d.ServiceType == typeof(IDbContextOptionsConfiguration<ApplicationDbContext>))!;
+            factory = factory.WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(services =>
+                {
+                    ServiceDescriptor descriptorDBContext = services.SingleOrDefault(d => d.ServiceType == typeof(IDbContextOptionsConfiguration<ApplicationDbContext>))!;
 
-        //            if (descriptorDBContext is not null)  
-        //                services.Remove(descriptorDBContext);
-                    
-        //            services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase(databaseName));
+                    if (descriptorDBContext is not null)
+                        services.Remove(descriptorDBContext);
 
-        //            if (ignoreSecurity)
-        //            {
-        //                services.AddSingleton<IAuthorizationHandler, AllowAnonymousHandler>();
+                    services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase(databaseName));
 
-        //                services.AddControllers(options =>
-        //                {
-        //                    options.Filters.Add(new UsuarioFalsoFiltro());
-        //                });
-        //            }
+                    if (ignoreSecurity)
+                    {
+                        services.AddSingleton<IAuthorizationHandler, AllowAnonymousHandler>();
 
-        //        });
-        //    });
+                        services.AddControllers(options =>
+                        {
+                            options.Filters.Add(new FakeUserFilter());
+                        });
+                    }
 
-        //    return factory;
-        //}
+                });
+            });
+
+            return factory;
+        }
 
         protected async Task<string> CreateUser(string databaseName, WebApplicationFactory<Program> factory)
             => await CreateUser(databaseName, factory, [], "example@gmail.com");
@@ -83,7 +76,7 @@ namespace LibraryAPITests.Utilidades
 
         protected async Task<string> CreateUser(string databaseName, WebApplicationFactory<Program> factory, IEnumerable<Claim> claims, string email)
         {
-            var registrationUrl = "/api/v1/users/register";
+            var registrationUrl = "/api/v1/users/registerV1";
             string token = string.Empty;
             token = await GetToken(email, registrationUrl, factory);
 
@@ -102,7 +95,7 @@ namespace LibraryAPITests.Utilidades
 
                 context.UserClaims.AddRange(userClaims);
                 await context.SaveChangesAsync();
-                var loginUrl = "/api/v1/users/login";
+                var loginUrl = "/api/v1/users/loginV1";
                 token = await GetToken(email, loginUrl, factory);
             }
 
@@ -118,7 +111,7 @@ namespace LibraryAPITests.Utilidades
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
-            var authenticationResponse = JsonSerializer.Deserialize<AuthenticationResponseDTO>(content, jsonSerializerOptions)!;
+            var authenticationResponse = JsonSerializer.Deserialize<AuthenticationResponseDTO>(content, _jsonSerializerOptions)!;
 
             Assert.IsNotNull(authenticationResponse.Token);
 
