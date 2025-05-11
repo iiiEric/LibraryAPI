@@ -22,7 +22,7 @@ namespace LibraryAPI.Utils
             if (!AEcontext.ActionArguments.TryGetValue("bookCreationDTO", out var value) || value is not BookCreationDTO bookCreationDTO)
             {
                 AEcontext.ModelState.AddModelError(string.Empty, "Invalid model.");
-                AEcontext.Result = AEcontext.ModelState.GenerateProblemDetails();
+                AEcontext.Result = AEcontext.ModelState.BuildProblemDetails();
                 return;
             }
 
@@ -30,7 +30,7 @@ namespace LibraryAPI.Utils
             {
                 _logger.LogWarning("Failed to create book. No authors provided.");
                 AEcontext.ModelState.AddModelError(nameof(bookCreationDTO.AuthorsIds), "At least one author ID is required.");
-                AEcontext.Result = AEcontext.ModelState.GenerateProblemDetails();
+                AEcontext.Result = AEcontext.ModelState.BuildProblemDetails();
                 return;
             }
 
@@ -45,7 +45,7 @@ namespace LibraryAPI.Utils
                 var authorsNotExistsString = string.Join(", ", authorsNotExists);
                 _logger.LogWarning("Failed to create book. Some author IDs do not exist: {AuthorsNotExistsIds}", authorsNotExistsString);
                 AEcontext.ModelState.AddModelError(nameof(bookCreationDTO.AuthorsIds), $"Some author IDs do not exist: {authorsNotExistsString}");
-                AEcontext.Result = AEcontext.ModelState.GenerateProblemDetails();
+                AEcontext.Result = AEcontext.ModelState.BuildProblemDetails();
                 return;
             }
 

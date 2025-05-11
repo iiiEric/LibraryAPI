@@ -5,7 +5,7 @@ namespace LibraryAPI.Utils
 {
     public static class ModelStateDictionaryExtensions
     {
-        public static BadRequestObjectResult GenerateProblemDetails(this ModelStateDictionary modelState)
+        public static BadRequestObjectResult BuildProblemDetails(this ModelStateDictionary modelState)
         {
             var problemDetails = new ValidationProblemDetails(modelState)
             {
