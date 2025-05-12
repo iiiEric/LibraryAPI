@@ -18,8 +18,9 @@ namespace LibraryAPITests.IntegrationTests.Controllers.V1
         #region Test Data
         private static readonly string _url = "/api/v1/authors";
         private string _databaseName = Guid.NewGuid().ToString();
-        private Author _defaultAuthor = new AuthorBuilder().WithName("Eric").WithSurname1("Aaa").Build();
-        private Author _defaultAuthor2 = new AuthorBuilder().WithName("Alex").WithSurname1("Bbb").Build();
+        private Author _defaultAuthor = new AuthorBuilder().WithName("George Raymond").WithSurname1("Richard").Build();
+        private Author _defaultAuthor2 = new AuthorBuilder().WithName("John Ronald").WithSurname1("Reuel").Build();
+        private AuthorCreationDTO _defaultAuthorCreationDTO = new AuthorCreationDTOBuilder().WithName("George Raymond").WithSurname1("Richard").Build();
         private HttpClient _client = null!;
         private WebApplicationFactory<Program> _factory = null!;
         #endregion
@@ -63,16 +64,8 @@ namespace LibraryAPITests.IntegrationTests.Controllers.V1
         [TestMethod]
         public async Task Post_WhenUserIsNotAuthenticated_ReturnsUnauthorized()
         {
-            // Arrange
-            var authorCreationDTO = new AuthorCreationDTO
-            {
-                Name = "Eric",
-                Surname1 = "Aaa",
-                Identity = "123"
-            };
-
             // Act
-            var response = await _client.PostAsJsonAsync(_url, authorCreationDTO);
+            var response = await _client.PostAsJsonAsync(_url, _defaultAuthorCreationDTO);
 
             // Assert
             Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -83,18 +76,10 @@ namespace LibraryAPITests.IntegrationTests.Controllers.V1
         {
             // Arrange
             var token = await CreateUser(_databaseName, _factory);
-
             _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-            var authorCreationDTO = new AuthorCreationDTO
-            {
-                Name = "Eric",
-                Surname1 = "Aaa",
-                Identity = "123"
-            };
-
             // Act
-            var response = await _client.PostAsJsonAsync(_url, authorCreationDTO);
+            var response = await _client.PostAsJsonAsync(_url, _defaultAuthorCreationDTO);
 
             // Assert
             Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
@@ -106,18 +91,10 @@ namespace LibraryAPITests.IntegrationTests.Controllers.V1
             // Arrange
             var claims = new List<Claim> { _adminClaim };
             var token = await CreateUser(_databaseName, _factory, claims);
-
             _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-            var authorCreationDTO = new AuthorCreationDTO
-            {
-                Name = "Eric",
-                Surname1 = "Aaa",
-                Identity = "123"
-            };
-
             // Act
-            var response = await _client.PostAsJsonAsync(_url, authorCreationDTO);
+            var response = await _client.PostAsJsonAsync(_url, _defaultAuthorCreationDTO);
             response.EnsureSuccessStatusCode();
 
             // Assert

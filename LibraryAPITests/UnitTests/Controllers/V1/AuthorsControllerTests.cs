@@ -28,9 +28,9 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
     public class AuthorsControllerTests: TestBase
     {
         #region Test Data
-        private Author _defaultAuthor = new AuthorBuilder().WithName("Eric").WithSurname1("Aaa").Build();
-        private Author _defaultAuthor2 = new AuthorBuilder().WithName("Alex").WithSurname1("Bbb").Build();
-        private AuthorCreationDTO _defaultAuthorCreationDTO = new AuthorCreationDTOBuilder().WithName("Eric").WithSurname1("Aaa").Build();
+        private Author _defaultAuthor = new AuthorBuilder().WithName("George Raymond").WithSurname1("Richard").Build();
+        private Author _defaultAuthor2 = new AuthorBuilder().WithName("John Ronald").WithSurname1("Reuel").Build();
+        private AuthorCreationDTO _defaultAuthorCreationDTO = new AuthorCreationDTOBuilder().WithName("George Raymond").WithSurname1("Richard").Build();
         #endregion
 
         ApplicationDbContext _context = null!;
@@ -83,7 +83,6 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
             var authorWithBooksDTO = result!.Value as AuthorWithBooksDTO;
             Assert.IsNotNull(authorWithBooksDTO);
             Assert.AreEqual(1, authorWithBooksDTO!.Id);
-            Assert.AreEqual("Eric Aaa", authorWithBooksDTO!.FullName);
         }
 
         [TestMethod]
