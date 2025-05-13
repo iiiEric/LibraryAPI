@@ -5,6 +5,8 @@ using LibraryAPI.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
+using static LibraryAPI.Utils.ResponseHelper;
 
 namespace LibraryAPI.Controllers.V1
 {
@@ -26,7 +28,11 @@ namespace LibraryAPI.Controllers.V1
 
         [HttpGet("{ids}", Name = "GetAuthorsByIdsV1")]
         [AllowAnonymous]
-        public async Task<ActionResult<List<AuthorWithBooksDTO>>> Get([FromRoute] string ids)
+        [EndpointSummary("Retrieves a list of authors along with their books based on the provided author IDs.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<List<AuthorWithBooksDTO>>> Get([FromRoute][Description("Author Ids")] string ids)
         {
             _logger.LogInformation("Retrieving authors with IDs {AuthorsIds}", ids);
 
@@ -38,11 +44,7 @@ namespace LibraryAPI.Controllers.V1
             }
 
             if (!collectionIds.Any())
-            {
-                _logger.LogWarning("No valid author IDs provided.");
-                ModelState.AddModelError(nameof(ids), "No valid author IDs provided.");
-                return ValidationProblem();
-            }
+                return LogAndReturnValidationProblem(_logger, nameof(ids), "No valid author IDs provided.", ModelState);
 
             var authors = await _context.Authors
                  .Include(x => x.Books)
@@ -55,11 +57,9 @@ namespace LibraryAPI.Controllers.V1
                 var authorsExistsIds = authors.Select(x => x.Id).ToList();
                 var authorsNotExists = collectionIds.Except(authorsExistsIds);
                 var authorsNotExistsString = string.Join(", ", authorsNotExists);
-                _logger.LogWarning("Some author IDs not found: {AuthorsNotExistsIds}", authorsNotExistsString);
-                ModelState.AddModelError(nameof(ids), $"Some author IDs not found: {authorsNotExistsString}");
-                return ValidationProblem();
+                return LogAndReturnNotFound(_logger, "Some author IDs were not found: {0}", authorsNotExistsString);
             }
-           
+
             var authorsWithBooksDTO = _mapper.Map<List<AuthorWithBooksDTO>>(authors);
 
             _logger.LogInformation("Authors with IDs {AuthorsIds} retrieved successfully.", ids);
@@ -67,6 +67,8 @@ namespace LibraryAPI.Controllers.V1
         }
 
         [HttpPost(Name = "CreateAuthorsV1")]
+        [EndpointSummary("Creates multiple authors from the provided data.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status201Created)]
         public async Task<ActionResult> Post([FromBody] IEnumerable<AuthorCreationDTO> authorsCreationDTO)
         {
             var authors = _mapper.Map<IEnumerable<Author>>(authorsCreationDTO);
@@ -79,12 +81,13 @@ namespace LibraryAPI.Controllers.V1
 
             var authorsDTO = _mapper.Map<IEnumerable<AuthorDTO>>(authors);
             var ids = authors.Select(x => x.Id);
-            var IdsString = string.Join(", ", ids);
+            var idsString = string.Join(", ", ids);
 
             foreach (var author in authors)
                 _logger.LogInformation("Author with ID {AuthorId} created successfully.", author.Id);
 
-            return CreatedAtRoute("GetAuthorsByIdsV1", new { ids = IdsString }, authorsDTO);
+            return LogAndReturnCreatedAtRoute(_logger, "GetAuthorsByIdsV1", new { ids = idsString }, authorsDTO, 
+                "Created authors with IDs: {0}", idsString);
         }
     }
 }

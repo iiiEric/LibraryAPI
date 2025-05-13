@@ -8,10 +8,8 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.Extensions.Logging;
-using System.Net;
-using System.Xml.Linq;
+using System.ComponentModel;
+using static LibraryAPI.Utils.ResponseHelper;
 
 namespace LibraryAPI.Controllers.V1
 {
@@ -39,16 +37,14 @@ namespace LibraryAPI.Controllers.V1
         [HttpGet(Name = "GetCommentsV1")]
         [AllowAnonymous]
         [OutputCache(Tags = [_cache])]
+        [EndpointSummary("Retrieves a list of comments for the specified book.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<List<CommentDTO>>> Get(int bookId)
         {
-            _logger.LogInformation("Retrieving all comments of the book {BookId}", bookId);
-
             var existsBook = await _context.Books.AnyAsync(x => x.Id == bookId);
             if (!existsBook)
-            {
-                _logger.LogWarning("Book with ID {BookId} not found.", bookId);
-                return NotFound();
-            }
+                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", bookId);
 
             var comments = await _context.Comments
                 .Include(x => x.User)
@@ -63,165 +59,110 @@ namespace LibraryAPI.Controllers.V1
         [HttpGet("{id:guid}", Name = "GetCommentV1")]
         [AllowAnonymous]
         [OutputCache(Tags = [_cache])]
-        public async Task<ActionResult<CommentDTO>> Get([FromRoute] Guid id)
+        [EndpointSummary("Retrieves a single comment by its specified ID.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<CommentDTO>> Get([FromRoute][Description("Comment Id")] Guid id)
         {
-            _logger.LogInformation("Retrieving comment with ID {CommentId}", id);
-
             var comment = await _context.Comments
                 .Include(x => x.User)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (comment is null)
-            {
-                _logger.LogWarning("Comment with ID {CommentId} not found.", id);
-                return NotFound();
-            }
+                return LogAndReturnNotFound(_logger, "Comment with ID {CommentId} was not found.", id);
 
             var commentDTO = _mapper.Map<CommentDTO>(comment);
-
-            _logger.LogInformation("Comment with ID {CommentId} retrieved successfully.", id);
             return Ok(commentDTO);
         }
 
         [HttpPost(Name = "CreateCommentV1")]
+        [EndpointSummary("Creates a new comment for the specified book.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status201Created)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Post(int bookId, [FromBody] CommentCreationDTO commentCreationDTO)
         {
-            _logger.LogInformation("Creating comment for book ID {BookId}", bookId);
-
             var existsBook = await _context.Books.AnyAsync(x => x.Id == bookId);
             if (!existsBook)
-            {
-                _logger.LogWarning("Book with ID {BookId} not found.", bookId);
-                ModelState.AddModelError(nameof(bookId), $"Book id {bookId} does not exist");
-                return ValidationProblem();
-            }
+                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", bookId);
 
             var user = await _usersServicies.GetCurrentUser();
-            //Unnecessary by having the [Authorize]
-            //if (user is null)
-            //{
-            //    _logger.LogWarning("User not found.");
-            //    ModelState.AddModelError(string.Empty, "User not found.");
-            //    return ValidationProblem();
-            //}
-
             var comment = _mapper.Map<Comment>(commentCreationDTO);
             comment.BookId = bookId;
             comment.PublicationDate = DateTime.UtcNow;
             comment.UserId = user!.Id;
+
             _context.Add(comment);
             await _context.SaveChangesAsync();
             await _outputCacheStore.EvictByTagAsync(_cache, default);
 
             var commentDTO = _mapper.Map<CommentDTO>(comment);
 
-            _logger.LogInformation("Comment with ID {CommentId} created successfully.", comment.Id);
             return CreatedAtRoute("GetCommentV1", new { id = comment.Id, bookId }, commentDTO);
         }
 
         [HttpPatch("{id:guid}", Name = "PatchCommentV1")]
+        [EndpointSummary("Partially updates a comment by its ID for the specified book.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Patch([FromRoute] Guid id, int bookId, [FromBody] JsonPatchDocument<CommentPatchDTO> patchDocument)
         {
-            _logger.LogInformation("Received PATCH request for comment with ID {CommentId}.", id);
-
             var existsBook = await _context.Books.AnyAsync(x => x.Id == bookId);
             if (!existsBook)
-            {
-                _logger.LogWarning("Book with ID {BookId} not found.", bookId);
-                ModelState.AddModelError(nameof(bookId), $"Book id {bookId} does not exist");
-                return ValidationProblem();
-            }
+                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", bookId);
 
             if (patchDocument is null)
-            {
-                _logger.LogWarning("PATCH request for comment with ID {CommentId} failed: patch document is null.", id);
-                ModelState.AddModelError(nameof(patchDocument), "Patch document cannot be null.");
-                return ValidationProblem();
-            }
+                return LogAndReturnValidationProblem(_logger, nameof(patchDocument), "Patch document is null.", ModelState);
 
             var comment = await _context.Comments.FirstOrDefaultAsync(x => x.Id == id);
             if (comment is null)
-            {
-                _logger.LogWarning("PATCH request failed: comment with ID {CommentId} not found.", id);
-                ModelState.AddModelError(nameof(id), $"Comment with ID {id} not found.");
-                return ValidationProblem();
-            }
+                return LogAndReturnNotFound(_logger, "Comment with ID {CommentId} was not found.", id);
 
             var user = await _usersServicies.GetCurrentUser();
-            //Unnecessary by having the [Authorize]
-            //if (user is null)
-            //{
-            //    _logger.LogWarning("User not found.");
-            //    ModelState.AddModelError(string.Empty, "User not found.");
-            //    return ValidationProblem();
-            //}
 
             if (user!.Id != comment.UserId)
-            {
-                _logger.LogWarning("User with ID {UserId} is not authorized to modify comment with ID {CommentId} of user {CommentUserId}.", user.Id, id, comment.UserId);
-                return Forbid();
-            }
+                return LogAndReturnForbidden(_logger, "User with ID {UserId} is not authorized to modify comment with ID {CommentId}.", user.Id, id);
 
             var commentPatchDTO = _mapper.Map<CommentPatchDTO>(comment);
             patchDocument.ApplyTo(commentPatchDTO, ModelState);
 
             var isValid = TryValidateModel(commentPatchDTO);
             if (!isValid)
-            {
-                _logger.LogWarning("PATCH request for comment with ID {CommentId} failed validation.", id);
-                return ValidationProblem();
-            }
+                return LogAndReturnValidationProblem(_logger, nameof(id), $"Comment with ID {id} failed validation.", ModelState);
 
             _mapper.Map(commentPatchDTO, comment);
             await _context.SaveChangesAsync();
             await _outputCacheStore.EvictByTagAsync(_cache, default);
 
-            _logger.LogInformation("Comment with ID {CommentId} patched successfully.", id);
-            return NoContent();
+            return LogAndReturnNoContent(_logger, "Comment with ID {CommentId} patched successfully.", id);
         }
 
         [HttpDelete("{id:guid}", Name = "DeleteCommentV1")]
+        [EndpointSummary("Deletes a comment by its ID for the specified book.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete([FromRoute] Guid id, int bookId)
         {
-            _logger.LogInformation("Attempting to delete comment with ID {CommentId}", id);
-
             var existsBook = await _context.Books.AnyAsync(x => x.Id == bookId);
             if (!existsBook)
-            {
-                _logger.LogWarning("Book with ID {BookId} not found.", bookId);
-                ModelState.AddModelError(nameof(bookId), $"Book id {bookId} does not exist");
-                return ValidationProblem();
-            }
+                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", bookId);
 
             var user = await _usersServicies.GetCurrentUser();
-            //Unnecessary by having the [Authorize]
-            //if (user is null)
-            //{
-            //    _logger.LogWarning("User not found.");
-            //    ModelState.AddModelError(string.Empty, "User not found.");
-            //    return ValidationProblem();
-            //}
-
             var comment = await _context.Comments.FirstOrDefaultAsync(x => x.Id == id);
             if (comment is null)
-            {
-                _logger.LogWarning("Attempted to delete non-existing comment with ID {CommentId}", id);
-                return NotFound();
-            }
+                return LogAndReturnNotFound(_logger, "Comment with ID {CommentId} was not found.", id);
 
             if (user!.Id != comment.UserId)
-            {
-                _logger.LogWarning("User with ID {UserId} is not authorized to modify comment with ID {CommentId} of user {CommentUserId}.", user.Id, id, comment.UserId);
-                return Forbid();
-            }
+                return LogAndReturnForbidden(_logger, "User with ID {UserId} is not authorized to delete comment with ID {CommentId}.", user.Id, id);
 
             comment.IsDeleted = true;
             _context.Update(comment);
             await _context.SaveChangesAsync();
             await _outputCacheStore.EvictByTagAsync(_cache, default);
 
-            _logger.LogInformation("Comment with ID {CommentId} deleted successfully.", id);
-            return NoContent();
+            return LogAndReturnNoContent(_logger, "Comment with ID {CommentId} deleted successfully.", id);
         }
     }
 }

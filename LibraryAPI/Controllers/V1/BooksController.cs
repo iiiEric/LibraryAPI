@@ -4,10 +4,11 @@ using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
 using LibraryAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
+using static LibraryAPI.Utils.ResponseHelper;
 
 namespace LibraryAPI.Controllers.V1
 {
@@ -19,59 +20,25 @@ namespace LibraryAPI.Controllers.V1
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<BooksController> _logger;
-        //private readonly ITimeLimitedDataProtector _timeLimitedDataProtector;
         private readonly IOutputCacheStore _outputCacheStore;
         private const string _cache = "BooksCache";
 
-        public BooksController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger/*, IDataProtectionProvider dataProtectionProvider*/,
+        public BooksController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger,
             IOutputCacheStore outputCacheStore)
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
-            //this._timeLimitedDataProtector = dataProtectionProvider.CreateProtector("BooksController").ToTimeLimitedDataProtector();
             _outputCacheStore = outputCacheStore;
         }
-
-        //[HttpGet("collection/get-tokenV1")]
-        //public ActionResult GetTokenForBookCollection()
-        //{
-        //    var plainText = Guid.NewGuid().ToString();
-        //    var token = _timeLimitedDataProtector.Protect(plainText, lifetime: TimeSpan.FromDays(1));
-        //    var url = Url.RouteUrl("GetBookCollectionUsingToken", new { token }, "https");
-        //    return Ok(new { url });
-        //}
-
-        //[HttpGet("collection/{token}V1", Name = "GetBookCollectionUsingTokenV1")]
-        //[AllowAnonymous]
-        //public async Task<ActionResult<IEnumerable<BookDTO>>> GetCollectionUsingToken(string token)
-        //{
-        //    try
-        //    {
-        //        _timeLimitedDataProtector.Unprotect(token);
-        //    }
-        //    catch (Exception)
-        //    {
-        //        _logger.LogWarning("Token has expired.");
-        //        ModelState.AddModelError(nameof(token), "Token has expired.");
-        //        return ValidationProblem();
-        //    }
-
-        //    _logger.LogInformation("Retrieving all books.");
-
-        //    var books = await _context.Books.ToListAsync(); ;
-        //    var booksDTO = _mapper.Map<IEnumerable<BookDTO>>(books);
-
-        //    return Ok(booksDTO);
-        //}
 
         [HttpGet(Name = "GetBooksV1")]
         [AllowAnonymous]
         [OutputCache(Tags = [_cache])]
+        [EndpointSummary("Retrieves a paginated list of books.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<BookDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
-            _logger.LogInformation("Retrieving all books.");
-
             var queryable = _context.Books.AsQueryable();
             await HttpContext.InsertHeaderPaginationParameters(queryable);
 
@@ -87,35 +54,32 @@ namespace LibraryAPI.Controllers.V1
         [HttpGet("{id:int}", Name = "GetBookV1")]
         [AllowAnonymous]
         [OutputCache(Tags = [_cache])]
-        public async Task<ActionResult<BookWithAuthorsDTO>> Get([FromRoute] int id)
+        [EndpointSummary("Retrieves a single book with its authors by the specified book ID.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<BookWithAuthorsDTO>> Get([FromRoute][Description("Book Id")] int id)
         {
-            _logger.LogInformation("Retrieving book with ID {BookId}", id);
-
             var book = await _context.Books
                 .Include(x => x.Authors)
                 .ThenInclude(x => x.Author)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (book is null)
-            {
-                _logger.LogWarning("Book with ID {BookId} not found.", id);
-                return NotFound();
-            }
+                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", id);
 
             var bookWithAuthorDTO = _mapper.Map<BookWithAuthorsDTO>(book);
 
-            _logger.LogInformation("Book with ID {BookId} retrieved successfully.", id);
             return Ok(bookWithAuthorDTO);
         }
 
         [HttpPost(Name = "CreateBookV1")]
         [ServiceFilter<ValidateBookFilter>]
+        [EndpointSummary("Creates a new book from the provided data.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status201Created)]
         public async Task<ActionResult> Post([FromBody] BookCreationDTO bookCreationDTO)
         {
             var book = _mapper.Map<Book>(bookCreationDTO);
             assignAuthorsOrder(book);
-
-            _logger.LogInformation("Creating book with title '{Title}' and author IDs {AuthorIds}", book.Title, string.Join(", ", bookCreationDTO.AuthorsIds));
 
             _context.Add(book);
             await _context.SaveChangesAsync();
@@ -123,8 +87,8 @@ namespace LibraryAPI.Controllers.V1
 
             var bookDTO = _mapper.Map<BookDTO>(book);
 
-            _logger.LogInformation("Book with ID {BookId} created successfully.", book.Id);
-            return CreatedAtRoute("GetBookV1", new { id = book.Id }, bookDTO);
+            return LogAndReturnCreatedAtRoute(_logger, "GetBookV1", new { id = book.Id }, bookDTO, 
+                "Book with ID {BookId} created successfully.", book.Id);
         }
 
         private void assignAuthorsOrder(Book book)
@@ -140,45 +104,40 @@ namespace LibraryAPI.Controllers.V1
 
         [HttpPut("{id:int}", Name = "UpdateBookV1")]
         [ServiceFilter<ValidateBookFilter>]
+        [EndpointSummary("Updates an existing book with the provided data.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Put([FromRoute] int id, [FromBody] BookCreationDTO bookCreationDTO)
         {
-            var bookDB = await _context.Books
+            var book = await _context.Books
                 .Include(x => x.Authors)
                 .FirstOrDefaultAsync(x => x.Id == id);
-            if (bookDB is null)
-            {
-                _logger.LogWarning("Attempted to update non-existing book with ID {BookId}", id);
-                ModelState.AddModelError(nameof(id), "The provided ID does not match any existing book.");
-                return ValidationProblem();
-            }
+            if (book is null)
+                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", id);
 
-            bookDB = _mapper.Map(bookCreationDTO, bookDB);
-            assignAuthorsOrder(bookDB);
+            book = _mapper.Map(bookCreationDTO, book);
+            assignAuthorsOrder(book);
 
-            _context.Update(bookDB);
+            _context.Update(book);
             await _context.SaveChangesAsync();
             await _outputCacheStore.EvictByTagAsync(_cache, default);
 
-            _logger.LogInformation("Book with ID {BookId} updated successfully.", id);
-            return NoContent();
+            return LogAndReturnNoContent(_logger, "Book with ID {BookId} updated successfully.", id);
         }
 
         [HttpDelete("{id:int}", Name = "DeleteBookV1")]
+        [EndpointSummary("Deletes a book by the specified book ID.")]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete([FromRoute] int id)
         {
-            _logger.LogInformation("Attempting to delete book with ID {BookId}", id);
-
             var recordsDeleted = await _context.Books.Where(x => x.Id == id).ExecuteDeleteAsync();
             if (recordsDeleted == 0)
-            {
-                _logger.LogWarning("Attempted to delete non-existing book with ID {BookId}", id);
-                return NotFound();
-            }
-            else
-                await _outputCacheStore.EvictByTagAsync(_cache, default);
+                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", id);
 
-            _logger.LogInformation("Book with ID {BookId} deleted successfully.", id);
-            return NoContent();
+            await _outputCacheStore.EvictByTagAsync(_cache, default);
+
+            return LogAndReturnNoContent(_logger, "Book with ID {BookId} deleted successfully.", id);
         }
     }
 }
