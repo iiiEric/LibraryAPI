@@ -60,7 +60,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
             var response = await _controller.Get(1);
 
             // Assert
-            var result = response.Result as StatusCodeResult;
+            var result = response.Result as NotFoundObjectResult;
             Assert.IsNotNull(result);
             Assert.AreEqual(StatusCodes.Status404NotFound, result!.StatusCode);
         }
