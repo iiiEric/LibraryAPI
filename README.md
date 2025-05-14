@@ -32,7 +32,7 @@ Role-based access control for secure operations
 🧪 Testing
 ✅ Unit tests: lightweight and fast, mocking services and dependencies using NSubstitute
 
-🔄 Integration tests: verify complete request/response cycles and middleware behavior using the TestServer or WebApplicationFactory
+🔄 Integration tests: verify complete request/response cycles and middleware behavior using WebApplicationFactory
 
 Ensures correctness of:
 
