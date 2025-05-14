@@ -5,55 +5,44 @@ namespace LibraryAPI.Utils
 {
     public static class ResponseHelper
     {
-        public static NotFoundObjectResult LogAndReturnNotFound(ILogger logger, string message, params object[] args)
+        public static NotFoundObjectResult LogAndReturnNotFound(ILogger logger, string message)
         {
-            var formattedMessage = FormatMessage(message, args);
-            logger.LogWarning(formattedMessage);
-            return new NotFoundObjectResult(new { message = formattedMessage });
+            logger.LogWarning(message);
+            return new NotFoundObjectResult(new { message });
         }
 
-        public static BadRequestObjectResult LogAndReturnBadRequest(ILogger logger, string message, params object[] args)
+        public static BadRequestObjectResult LogAndReturnBadRequest(ILogger logger, string message)
         {
-            var formattedMessage = FormatMessage(message, args);
-            logger.LogWarning(formattedMessage);
-            return new BadRequestObjectResult(new { message = formattedMessage });
+            logger.LogWarning(message);
+            return new BadRequestObjectResult(new { message });
         }
 
-        public static ObjectResult LogAndReturnForbidden(ILogger logger, string message, params object[] args)
+        public static ObjectResult LogAndReturnForbidden(ILogger logger, string message)
         {
-            var formattedMessage = FormatMessage(message, args);
-            logger.LogWarning(formattedMessage);
-            return new ObjectResult(new { message = formattedMessage })
+            logger.LogWarning(message);
+            return new ObjectResult(new { message })
             {
                 StatusCode = 403
             };
         }
 
-        public static BadRequestObjectResult LogAndReturnValidationProblem(ILogger logger, string key, string message, ModelStateDictionary modelState, params object[] args)
+        public static BadRequestObjectResult LogAndReturnValidationProblem(ILogger logger, string key, string message, ModelStateDictionary modelState)
         {
-            var formattedMessage = FormatMessage(message, args);
-            logger.LogWarning(formattedMessage);
-            modelState.AddModelError(key, formattedMessage);
+            logger.LogWarning(message);
+            modelState.AddModelError(key, message);
             return new BadRequestObjectResult(new ValidationProblemDetails(modelState));
         }
 
-        public static CreatedAtRouteResult LogAndReturnCreatedAtRoute<T>(ILogger logger, string routeName, object routeValues, T value, string logMessage, params object[] args)
+        public static CreatedAtRouteResult LogAndReturnCreatedAtRoute<T>(ILogger logger, string routeName, object routeValues, T value, string message)
         {
-            var formattedMessage = FormatMessage(logMessage, args);
-            logger.LogInformation(formattedMessage);
+            logger.LogInformation(message);
             return new CreatedAtRouteResult(routeName, routeValues, value);
         }
 
-        public static NoContentResult LogAndReturnNoContent(ILogger logger, string message, params object[] args)
+        public static NoContentResult LogAndReturnNoContent(ILogger logger, string message)
         {
-            var formattedMessage = FormatMessage(message, args);
-            logger.LogInformation(formattedMessage);
+            logger.LogInformation(message);
             return new NoContentResult();
-        }
-
-        private static string FormatMessage(string message, object[] args)
-        {
-            return (args == null || args.Length == 0) ? message : string.Format(message, args);
         }
     }
 }

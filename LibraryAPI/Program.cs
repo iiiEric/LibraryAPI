@@ -34,11 +34,10 @@ builder.Services.AddOutputCache(options =>
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!;
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowOrigins",
-        builder =>
-        {
-            builder.WithOrigins(allowedOrigins).AllowAnyMethod().WithExposedHeaders("total-number-of-records");
-        });
+    options.AddDefaultPolicy(optionsCORS =>
+    {
+        optionsCORS.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader().WithExposedHeaders("total-number-of-records");
+    });
 });
 
 builder.Services.AddAutoMapper(typeof(Program));
@@ -123,6 +122,15 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+//using (var scope = app.Services.CreateScope())
+//{
+//    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+//    if (dbContext.Database.IsRelational())
+//    {
+//        dbContext.Database.Migrate();
+//    }
+//}
+
 #region Middleware area
 app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run(async context =>
 {
@@ -154,7 +162,7 @@ app.UseSwaggerUI(options =>
         options.SwaggerEndpoint($"/swagger/{version}/swagger.json", $"Library API {version.ToUpper()}");
 });
 
-app.UseCors("AllowOrigins");
+app.UseCors();
 
 app.UseOutputCache();
 

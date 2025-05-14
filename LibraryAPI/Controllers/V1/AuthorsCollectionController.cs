@@ -57,7 +57,7 @@ namespace LibraryAPI.Controllers.V1
                 var authorsExistsIds = authors.Select(x => x.Id).ToList();
                 var authorsNotExists = collectionIds.Except(authorsExistsIds);
                 var authorsNotExistsString = string.Join(", ", authorsNotExists);
-                return LogAndReturnNotFound(_logger, "Some author IDs were not found: {0}", authorsNotExistsString);
+                return LogAndReturnNotFound(_logger, $"Some author IDs were not found: {authorsNotExistsString}");
             }
 
             var authorsWithBooksDTO = _mapper.Map<List<AuthorWithBooksDTO>>(authors);
@@ -86,8 +86,8 @@ namespace LibraryAPI.Controllers.V1
             foreach (var author in authors)
                 _logger.LogInformation("Author with ID {AuthorId} created successfully.", author.Id);
 
-            return LogAndReturnCreatedAtRoute(_logger, "GetAuthorsByIdsV1", new { ids = idsString }, authorsDTO, 
-                "Created authors with IDs: {0}", idsString);
+            return LogAndReturnCreatedAtRoute(_logger, "GetAuthorsByIdsV1", new { ids = idsString }, authorsDTO,
+                $"Created authors with IDs: {idsString}");
         }
     }
 }

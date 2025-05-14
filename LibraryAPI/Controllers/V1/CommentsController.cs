@@ -44,7 +44,7 @@ namespace LibraryAPI.Controllers.V1
         {
             var existsBook = await _context.Books.AnyAsync(x => x.Id == bookId);
             if (!existsBook)
-                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", bookId);
+                return LogAndReturnNotFound(_logger, $"Book with ID {bookId} was not found.");
 
             var comments = await _context.Comments
                 .Include(x => x.User)
@@ -69,7 +69,7 @@ namespace LibraryAPI.Controllers.V1
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (comment is null)
-                return LogAndReturnNotFound(_logger, "Comment with ID {CommentId} was not found.", id);
+                return LogAndReturnNotFound(_logger, $"Comment with ID {id} was not found.");
 
             var commentDTO = _mapper.Map<CommentDTO>(comment);
             return Ok(commentDTO);
@@ -83,7 +83,7 @@ namespace LibraryAPI.Controllers.V1
         {
             var existsBook = await _context.Books.AnyAsync(x => x.Id == bookId);
             if (!existsBook)
-                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", bookId);
+                return LogAndReturnNotFound(_logger, $"Book with ID {bookId} was not found.");
 
             var user = await _usersServicies.GetCurrentUser();
             var comment = _mapper.Map<Comment>(commentCreationDTO);
@@ -110,19 +110,19 @@ namespace LibraryAPI.Controllers.V1
         {
             var existsBook = await _context.Books.AnyAsync(x => x.Id == bookId);
             if (!existsBook)
-                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", bookId);
+                return LogAndReturnNotFound(_logger, $"Book with ID {bookId} was not found.");
 
             if (patchDocument is null)
                 return LogAndReturnValidationProblem(_logger, nameof(patchDocument), "Patch document is null.", ModelState);
 
             var comment = await _context.Comments.FirstOrDefaultAsync(x => x.Id == id);
             if (comment is null)
-                return LogAndReturnNotFound(_logger, "Comment with ID {CommentId} was not found.", id);
+                return LogAndReturnNotFound(_logger, $"Comment with ID {id} was not found.");
 
             var user = await _usersServicies.GetCurrentUser();
 
             if (user!.Id != comment.UserId)
-                return LogAndReturnForbidden(_logger, "User with ID {UserId} is not authorized to modify comment with ID {CommentId}.", user.Id, id);
+                return LogAndReturnForbidden(_logger, $"User with ID {user.Id} is not authorized to modify comment with ID {id}.");
 
             var commentPatchDTO = _mapper.Map<CommentPatchDTO>(comment);
             patchDocument.ApplyTo(commentPatchDTO, ModelState);
@@ -135,7 +135,7 @@ namespace LibraryAPI.Controllers.V1
             await _context.SaveChangesAsync();
             await _outputCacheStore.EvictByTagAsync(_cache, default);
 
-            return LogAndReturnNoContent(_logger, "Comment with ID {CommentId} patched successfully.", id);
+            return LogAndReturnNoContent(_logger, $"Comment with ID {id} patched successfully.");
         }
 
         [HttpDelete("{id:guid}", Name = "DeleteCommentV1")]
@@ -147,22 +147,22 @@ namespace LibraryAPI.Controllers.V1
         {
             var existsBook = await _context.Books.AnyAsync(x => x.Id == bookId);
             if (!existsBook)
-                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", bookId);
+                return LogAndReturnNotFound(_logger, $"Book with ID {bookId} was not found.");
 
             var user = await _usersServicies.GetCurrentUser();
             var comment = await _context.Comments.FirstOrDefaultAsync(x => x.Id == id);
             if (comment is null)
-                return LogAndReturnNotFound(_logger, "Comment with ID {CommentId} was not found.", id);
+                return LogAndReturnNotFound(_logger, $"Comment with ID {id} was not found.");
 
             if (user!.Id != comment.UserId)
-                return LogAndReturnForbidden(_logger, "User with ID {UserId} is not authorized to delete comment with ID {CommentId}.", user.Id, id);
+                return LogAndReturnForbidden(_logger, $"User with ID {user.Id} is not authorized to delete comment with ID {id}.");
 
             comment.IsDeleted = true;
             _context.Update(comment);
             await _context.SaveChangesAsync();
             await _outputCacheStore.EvictByTagAsync(_cache, default);
 
-            return LogAndReturnNoContent(_logger, "Comment with ID {CommentId} deleted successfully.", id);
+            return LogAndReturnNoContent(_logger, $"Comment with ID {id} deleted successfully.");
         }
     }
 }

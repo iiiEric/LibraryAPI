@@ -128,7 +128,7 @@ namespace LibraryAPI.Controllers.V1
                  .FirstOrDefaultAsync(x => x.Id == id);
 
             if (author is null)
-                return LogAndReturnNotFound(_logger, "Author with ID {0} was not found.", id);
+                return LogAndReturnNotFound(_logger, $"Author with ID {id} was not found.");
 
             var authorWithBooksDTO = _mapper.Map<AuthorWithBooksDTO>(author);
             return Ok(authorWithBooksDTO);
@@ -150,7 +150,7 @@ namespace LibraryAPI.Controllers.V1
             var authorDTO = _mapper.Map<AuthorDTO>(author);
 
             return LogAndReturnCreatedAtRoute(_logger, "GetAuthorV1", new { id = author.Id }, authorDTO,
-                "Author with ID {0} created successfully.", author.Id);
+                $"Author with ID {author.Id} created successfully.");
         }
 
         [HttpPost("with-image", Name = "CreateAuthorWithImageV1")]
@@ -172,7 +172,7 @@ namespace LibraryAPI.Controllers.V1
             var authorDTO = _mapper.Map<AuthorDTO>(author);
 
             return LogAndReturnCreatedAtRoute(_logger, "GetAuthorV1", new { id = author.Id }, authorDTO,
-                "Author with ID {0} created successfully.", author.Id);
+                $"Author with ID {author.Id} created successfully.");
         }
 
         [HttpPut("{id:int}", Name = "UpdateAuthorV1")]
@@ -183,7 +183,7 @@ namespace LibraryAPI.Controllers.V1
         {
             var exists = await _context.Authors.AnyAsync(x => x.Id == id);
             if (!exists)
-                return LogAndReturnNotFound(_logger, "Author with ID {0} was not found.", id);
+                return LogAndReturnNotFound(_logger, $"Author with ID {id} was not found.");
 
             var author = _mapper.Map<Author>(authorCreationWithImageDTO);
             author.Id = id;
@@ -203,7 +203,7 @@ namespace LibraryAPI.Controllers.V1
             await _context.SaveChangesAsync();
             await _outputCacheStore.EvictByTagAsync(_cache, default);
 
-            return LogAndReturnNoContent(_logger, "Author with ID {0} updated successfully.", id);
+            return LogAndReturnNoContent(_logger, $"Author with ID {id} updated successfully.");
         }
 
         [HttpPatch("{id:int}", Name = "PatchAuthorV1")]
@@ -222,7 +222,7 @@ namespace LibraryAPI.Controllers.V1
 
             var author = await _context.Authors.FirstOrDefaultAsync(x => x.Id == id);
             if (author is null)
-                return LogAndReturnNotFound(_logger, "Author with ID {0} was not found.", id);
+                return LogAndReturnNotFound(_logger, $"Author with ID {id} was not found.");
 
             var authorPatchDTO = _mapper.Map<AuthorPatchDTO>(author);
             patchDocument.ApplyTo(authorPatchDTO, ModelState);
@@ -236,7 +236,7 @@ namespace LibraryAPI.Controllers.V1
             await _context.SaveChangesAsync();
             await _outputCacheStore.EvictByTagAsync(_cache, default);
 
-            return LogAndReturnNoContent(_logger, "Author with ID {0} patched successfully.", id);
+            return LogAndReturnNoContent(_logger, $"Author with ID {id} patched successfully.");
         }
 
         [HttpDelete("{id:int}", Name = "DeleteAuthorV1")]
@@ -249,14 +249,14 @@ namespace LibraryAPI.Controllers.V1
 
             var author = await _context.Authors.FirstOrDefaultAsync(x => x.Id == id);
             if (author is null)
-                return LogAndReturnNotFound(_logger, "Author with ID {0} was not found.", id);
+                return LogAndReturnNotFound(_logger, $"Author with ID {id} was not found.");
 
             _context.Remove(author);
             await _context.SaveChangesAsync();
             await _outputCacheStore.EvictByTagAsync(_cache, default);
             await _fileStorageService.Delete(author.ImageUrl, _container);
 
-            return LogAndReturnNoContent(_logger, "Author with ID {0} deleted successfully.", id);
+            return LogAndReturnNoContent(_logger, $"Author with ID {id} deleted successfully.");
         }
     }
 }

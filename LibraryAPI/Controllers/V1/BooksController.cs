@@ -65,7 +65,7 @@ namespace LibraryAPI.Controllers.V1
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (book is null)
-                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", id);
+                return LogAndReturnNotFound(_logger, $"Book with ID {id} was not found.");
 
             var bookWithAuthorDTO = _mapper.Map<BookWithAuthorsDTO>(book);
 
@@ -87,8 +87,8 @@ namespace LibraryAPI.Controllers.V1
 
             var bookDTO = _mapper.Map<BookDTO>(book);
 
-            return LogAndReturnCreatedAtRoute(_logger, "GetBookV1", new { id = book.Id }, bookDTO, 
-                "Book with ID {BookId} created successfully.", book.Id);
+            return LogAndReturnCreatedAtRoute(_logger, "GetBookV1", new { id = book.Id }, bookDTO,
+                $"Book with ID {book.Id} created successfully.");
         }
 
         private void assignAuthorsOrder(Book book)
@@ -113,7 +113,7 @@ namespace LibraryAPI.Controllers.V1
                 .Include(x => x.Authors)
                 .FirstOrDefaultAsync(x => x.Id == id);
             if (book is null)
-                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", id);
+                return LogAndReturnNotFound(_logger, $"Book with ID {id} was not found.");
 
             book = _mapper.Map(bookCreationDTO, book);
             assignAuthorsOrder(book);
@@ -122,7 +122,7 @@ namespace LibraryAPI.Controllers.V1
             await _context.SaveChangesAsync();
             await _outputCacheStore.EvictByTagAsync(_cache, default);
 
-            return LogAndReturnNoContent(_logger, "Book with ID {BookId} updated successfully.", id);
+            return LogAndReturnNoContent(_logger, $"Book with ID {id} updated successfully.");
         }
 
         [HttpDelete("{id:int}", Name = "DeleteBookV1")]
@@ -133,11 +133,11 @@ namespace LibraryAPI.Controllers.V1
         {
             var recordsDeleted = await _context.Books.Where(x => x.Id == id).ExecuteDeleteAsync();
             if (recordsDeleted == 0)
-                return LogAndReturnNotFound(_logger, "Book with ID {BookId} was not found.", id);
+                return LogAndReturnNotFound(_logger, $"Book with ID {id} was not found.");
 
             await _outputCacheStore.EvictByTagAsync(_cache, default);
 
-            return LogAndReturnNoContent(_logger, "Book with ID {BookId} deleted successfully.", id);
+            return LogAndReturnNoContent(_logger, $"Book with ID {id} deleted successfully.");
         }
     }
 }

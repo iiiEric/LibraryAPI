@@ -55,3 +55,10 @@ nunit-*.xml
 
 *.jfm
 .vs/
+
+/LibraryAPI/Properties/*
+
+!/LibraryAPI/Properties/launchSettings.json
+
+*.csproj.user
+*.launchSettings.json
