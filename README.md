@@ -49,7 +49,7 @@ ASP.NET Core 9
 
 C#
 
-xUnit for testing
+MSTest for testing
 
 NSubstitute for mocking
 
