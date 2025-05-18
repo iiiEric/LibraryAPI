@@ -31,6 +31,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
         private Author _defaultAuthor = new AuthorBuilder().WithName("George Raymond").WithSurname1("Richard").Build();
         private Author _defaultAuthor2 = new AuthorBuilder().WithName("John Ronald").WithSurname1("Reuel").Build();
         private AuthorCreationDTO _defaultAuthorCreationDTO = new AuthorCreationDTOBuilder().WithName("George Raymond").WithSurname1("Richard").Build();
+        //private AuthorFilterDTO _defaultAuthorFilterDTO
         #endregion
 
         ApplicationDbContext _context = null!;
@@ -53,6 +54,20 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
             _controller = new AuthorsController(_context, _mapper, _logger, _fileStorageService, _outputCacheStore);
         }
 
+        //[TestMethod]
+        //public async Task Filter_WhenNoMatch_ReturnsEmptyList()
+        //{
+        //    // Arrange     
+        //    _context.Add(_defaultAuthor);
+        //    _context.Add(_defaultAuthor2);
+        //    await _context.SaveChangesAsync();
+
+        //    // Act
+        //    var response = await _controller.Filter();
+
+        //    // Assert
+        //}
+
         [TestMethod]
         public async Task Get_WhenAuthorIdDoesNotExist_ReturnsNotFound()
         {
@@ -68,7 +83,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
         [TestMethod]
         public async Task Get_WhenAuthorIdDoesExist_ReturnsAuthor()
         {
-            // Arrange            
+            // Arrange    
             _context.Authors.Add(_defaultAuthor);
             _context.Authors.Add(_defaultAuthor2);
             await _context.SaveChangesAsync();

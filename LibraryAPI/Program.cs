@@ -1,13 +1,21 @@
 using LibraryAPI.Data;
+using LibraryAPI.DatabaseAccess.AuthorsRepository;
 using LibraryAPI.Entities;
 using LibraryAPI.Middlewares;
 using LibraryAPI.Services;
 using LibraryAPI.Swagger;
+using LibraryAPI.UseCases.Authors.Delete;
+using LibraryAPI.UseCases.Authors.GetAll;
+using LibraryAPI.UseCases.Authors.GetByCriteria;
+using LibraryAPI.UseCases.Authors.GetById;
+using LibraryAPI.UseCases.Authors.Patch;
+using LibraryAPI.UseCases.Authors.Post;
+using LibraryAPI.UseCases.Authors.PostWithImage;
+using LibraryAPI.UseCases.Authors.Put;
 using LibraryAPI.Utils;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -63,6 +71,20 @@ builder.Services.AddTransient<IUsersService, UsersService>();
 
 builder.Services.AddTransient<IFileStorageService, AzureFileStorageService>();
 builder.Services.AddScoped<ValidateBookFilter>();
+
+#region Repositories
+builder.Services.AddTransient<IAuthorRepository, SQLServerAuthorRepository>();
+builder.Services.AddTransient<AuthorsGetAllUseCase, AuthorsGetAllUseCase>();
+builder.Services.AddTransient<AuthorsGetByCriteriaUseCase, AuthorsGetByCriteriaUseCase>();
+builder.Services.AddTransient<AuthorGetByIdUseCase, AuthorGetByIdUseCase>();
+builder.Services.AddTransient<AuthorPostUseCase, AuthorPostUseCase>();
+builder.Services.AddTransient<AuthorPostWithImageUseCase, AuthorPostWithImageUseCase>();
+builder.Services.AddTransient<AuthorPutUseCase, AuthorPutUseCase>();
+builder.Services.AddTransient<AuthorPatchUseCase, AuthorPatchUseCase>();
+builder.Services.AddTransient<DeleteAuthorUseCase, DeleteAuthorUseCase>();
+#endregion
+
+
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication().AddJwtBearer(options =>

@@ -1,17 +1,19 @@
-﻿using AutoMapper;
-using LibraryAPI.Data;
+﻿using LibraryAPI.Constants;
 using LibraryAPI.DTOs;
-using LibraryAPI.Entities;
-using LibraryAPI.Services;
-using LibraryAPI.Utils;
+using LibraryAPI.UseCases.Authors.Delete;
+using LibraryAPI.UseCases.Authors.GetAll;
+using LibraryAPI.UseCases.Authors.GetByCriteria;
+using LibraryAPI.UseCases.Authors.GetById;
+using LibraryAPI.UseCases.Authors.Patch;
+using LibraryAPI.UseCases.Authors.Post;
+using LibraryAPI.UseCases.Authors.PostWithImage;
+using LibraryAPI.UseCases.Authors.Put;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.OutputCaching;
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
-using System.Linq.Dynamic.Core;
-using static LibraryAPI.Utils.ResponseHelper;
 
 namespace LibraryAPI.Controllers.V1
 {
@@ -20,117 +22,61 @@ namespace LibraryAPI.Controllers.V1
     [Authorize(Policy = "Admin")]
     public class AuthorsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
-        private readonly ILogger<AuthorsController> _logger;
-        private readonly IFileStorageService _fileStorageService;
-        private readonly IOutputCacheStore _outputCacheStore;
-        private const string _container = "Authors";
-        private const string _cache = "AuthorsCache";
+        private readonly AuthorsGetAllUseCase _authorsGetAllUseCase;
+        private readonly AuthorsGetByCriteriaUseCase _authorsGetByCriteriaUseCase;
+        private readonly AuthorGetByIdUseCase _authorsGetByIdUseCase;
+        private readonly AuthorPostUseCase _authorPostUseCase;
+        private readonly AuthorPostWithImageUseCase _authorPostWithImageUseCase;
+        private readonly AuthorPutUseCase _authorPutUseCase;
+        private readonly AuthorPatchUseCase _authorPatchUseCase;
+        private readonly DeleteAuthorUseCase _deleteAuthorUseCase;
 
-        public AuthorsController(ApplicationDbContext context, IMapper mapper, ILogger<AuthorsController> logger,
-            IFileStorageService fileStorageService, IOutputCacheStore outputCacheStore)
+        public AuthorsController(AuthorsGetAllUseCase authorsGetAllUseCase, AuthorsGetByCriteriaUseCase authorsGetByCriteriaUseCase, AuthorGetByIdUseCase authorGetByIdUseCase,
+            AuthorPostUseCase authorPostUseCase, AuthorPostWithImageUseCase authorPostWithImageUseCase, AuthorPutUseCase authorPutUseCase, AuthorPatchUseCase authorPatchUseCase,
+            DeleteAuthorUseCase deleteAuthorUseCase)
         {
-            _context = context;
-            _mapper = mapper;
-            _logger = logger;
-            _fileStorageService = fileStorageService;
-            _outputCacheStore = outputCacheStore;
+            _authorsGetAllUseCase = authorsGetAllUseCase;
+            _authorsGetByCriteriaUseCase = authorsGetByCriteriaUseCase;
+            _authorsGetByIdUseCase = authorGetByIdUseCase;
+            _authorPostUseCase = authorPostUseCase;
+            _authorPostWithImageUseCase = authorPostWithImageUseCase;
+            _authorPutUseCase = authorPutUseCase;
+            _authorPatchUseCase = authorPatchUseCase;
+            _deleteAuthorUseCase = deleteAuthorUseCase;
         }
 
         [HttpGet(Name = "GetAuthorsV1")]
         [AllowAnonymous]
-        [OutputCache(Tags = [_cache])]
+        [OutputCache(Tags = [CacheTags.Authors])]
         [EndpointSummary("Retrieves a paginated list of authors.")]
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<AuthorDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
-            _logger.LogInformation("Retrieving all authors.");
-            var queryable = _context.Authors.AsQueryable();
-            await HttpContext.InsertHeaderPaginationParameters(queryable);
-
-            var authors = await queryable
-                .OrderBy(x => x.Name)
-                .Paginate(paginationDTO)
-                .ToListAsync();
-
-            var authorsDTO = _mapper.Map<IEnumerable<AuthorDTO>>(authors);
+            var authorsDTO = await _authorsGetAllUseCase.Run(paginationDTO);
             return Ok(authorsDTO);
         }
 
-        [HttpGet("filterV1", Name = "filterAuthorsV1")]
+        [HttpGet("filterV1", Name = "GetAuthorsByCriteriaV1")]
         [AllowAnonymous]
         [EndpointSummary("Retrieves a list of authors filtered by the specified criteria.")]
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<object>>> Filter([FromQuery] AuthorFilterDTO authorFilterDTO)
+        public async Task<ActionResult<IEnumerable<object>>> GetByCriteria([FromQuery] AuthorFilterDTO authorFilterDTO)
         {
-            _logger.LogInformation("Filtering authors.");
-
-            var queryable = _context.Authors.AsQueryable();
-
-            if (!string.IsNullOrEmpty(authorFilterDTO.Name))
-                queryable = queryable.Where(x => x.Name.Contains(authorFilterDTO.Name));
-
-            if (!string.IsNullOrEmpty(authorFilterDTO.Surname1))
-                queryable = queryable.Where(x => x.Name.Contains(authorFilterDTO.Surname1));
-
-            if (authorFilterDTO.HasImage.HasValue)
-            {
-                queryable = authorFilterDTO.HasImage.Value
-                    ? queryable.Where(x => x.ImageUrl != null)
-                    : queryable.Where(x => x.ImageUrl == null);
-            }
-
-            if (!string.IsNullOrEmpty(authorFilterDTO.BookTitle))
-                queryable = queryable.Where(x => x.Books.Any(y => y.Book!.Title.Contains(authorFilterDTO.BookTitle)));
-
-            if (authorFilterDTO.IncludeBooks)
-                queryable = queryable.Include(x => x.Books).ThenInclude(x => x.Book);
-
-            if (!string.IsNullOrEmpty(authorFilterDTO.SortBy))
-            {
-                var orderType = authorFilterDTO.SortAscending ? "ascending" : "descending";
-                try
-                {
-                    queryable = queryable.OrderBy($"{authorFilterDTO.SortBy} {orderType}");
-                }
-                catch (Exception ex)
-                {
-                    queryable = queryable.OrderBy(x => x.Name);
-                    _logger.LogError(ex, "Error ordering authors by {OrderType} on field {SortBy}", orderType, authorFilterDTO.SortBy);
-                }
-            }
-            else
-            {
-                queryable = queryable.OrderBy(x => x.Name);
-            }
-
-            var authors = await queryable.Paginate(authorFilterDTO.PaginationDTO).ToListAsync();
-
-            return authorFilterDTO.IncludeBooks
-                ? Ok(_mapper.Map<IEnumerable<AuthorWithBooksDTO>>(authors))
-                : Ok(_mapper.Map<IEnumerable<AuthorDTO>>(authors));
+            var authorsObject = await _authorsGetByCriteriaUseCase.Run(authorFilterDTO);
+            return Ok(authorsObject);
         }
 
         [HttpGet("{id:int}", Name = "GetAuthorV1")]
         [AllowAnonymous]
-        [OutputCache(Tags = [_cache])]
+        [OutputCache(Tags = [CacheTags.Authors])]
         [EndpointSummary("Retrieves a single author with their books by the specified author ID.")]
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<AuthorWithBooksDTO>> Get([FromRoute][Description("Author Id")] int id)
         {
-            _logger.LogInformation("Retrieving author with ID {AuthorId}", id);
-
-            var author = await _context.Authors
-                 .Include(x => x.Books)
-                 .ThenInclude(x => x.Book)
-                 .FirstOrDefaultAsync(x => x.Id == id);
-
-            if (author is null)
-                return LogAndReturnNotFound(_logger, $"Author with ID {id} was not found.");
-
-            var authorWithBooksDTO = _mapper.Map<AuthorWithBooksDTO>(author);
+            var authorWithBooksDTO = await _authorsGetByIdUseCase.Run(id);
+            if (authorWithBooksDTO is null)
+                return NotFound();
             return Ok(authorWithBooksDTO);
         }
 
@@ -139,18 +85,8 @@ namespace LibraryAPI.Controllers.V1
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status201Created)]
         public async Task<ActionResult> Post([FromBody] AuthorCreationDTO authorCreationDTO)
         {
-            var author = _mapper.Map<Author>(authorCreationDTO);
-
-            _logger.LogInformation("Creating author with name '{Name}'", author.Name);
-
-            _context.Add(author);
-            await _context.SaveChangesAsync();
-            await _outputCacheStore.EvictByTagAsync(_cache, default);
-
-            var authorDTO = _mapper.Map<AuthorDTO>(author);
-
-            return LogAndReturnCreatedAtRoute(_logger, "GetAuthorV1", new { id = author.Id }, authorDTO,
-                $"Author with ID {author.Id} created successfully.");
+            var authorDTO = await _authorPostUseCase.Run(authorCreationDTO);
+            return CreatedAtRoute("GetAuthorV1", new { id = authorDTO.Id }, authorDTO);
         }
 
         [HttpPost("with-image", Name = "CreateAuthorWithImageV1")]
@@ -158,21 +94,8 @@ namespace LibraryAPI.Controllers.V1
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status201Created)]
         public async Task<ActionResult> PostWithImage([FromForm] AuthorCreationWithImageDTO authorCreationWithImageDTO)
         {
-            var author = _mapper.Map<Author>(authorCreationWithImageDTO);
-
-            _logger.LogInformation("Creating author with name '{Name}'", author.Name);
-
-            if (authorCreationWithImageDTO.Image is not null)
-                author.ImageUrl = await _fileStorageService.Store(_container, authorCreationWithImageDTO.Image);
-
-            _context.Add(author);
-            await _context.SaveChangesAsync();
-            await _outputCacheStore.EvictByTagAsync(_cache, default);
-
-            var authorDTO = _mapper.Map<AuthorDTO>(author);
-
-            return LogAndReturnCreatedAtRoute(_logger, "GetAuthorV1", new { id = author.Id }, authorDTO,
-                $"Author with ID {author.Id} created successfully.");
+            var authorDTO = await _authorPostWithImageUseCase.Run(authorCreationWithImageDTO);
+            return CreatedAtRoute("GetAuthorV1", new { id = authorDTO.Id }, authorDTO);
         }
 
         [HttpPut("{id:int}", Name = "UpdateAuthorV1")]
@@ -181,29 +104,10 @@ namespace LibraryAPI.Controllers.V1
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Put([FromRoute] int id, [FromForm] AuthorCreationWithImageDTO authorCreationWithImageDTO)
         {
-            var exists = await _context.Authors.AnyAsync(x => x.Id == id);
-            if (!exists)
-                return LogAndReturnNotFound(_logger, $"Author with ID {id} was not found.");
-
-            var author = _mapper.Map<Author>(authorCreationWithImageDTO);
-            author.Id = id;
-
-            if (authorCreationWithImageDTO.Image is not null)
-            {
-                var currentImage = await _context.Authors
-                    .Where(x => x.Id == id)
-                    .Select(x => x.ImageUrl)
-                    .FirstOrDefaultAsync();
-
-                var imageUrl = await _fileStorageService.Update(currentImage, _container, authorCreationWithImageDTO.Image);
-                author.ImageUrl = imageUrl;
-            }
-
-            _context.Update(author);
-            await _context.SaveChangesAsync();
-            await _outputCacheStore.EvictByTagAsync(_cache, default);
-
-            return LogAndReturnNoContent(_logger, $"Author with ID {id} updated successfully.");
+            bool updated = await _authorPutUseCase.Run(id, authorCreationWithImageDTO);
+            if (!updated)
+                return NotFound();
+            return NoContent();
         }
 
         [HttpPatch("{id:int}", Name = "PatchAuthorV1")]
@@ -213,30 +117,12 @@ namespace LibraryAPI.Controllers.V1
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Patch([FromRoute] int id, [FromBody] JsonPatchDocument<AuthorPatchDTO> patchDocument)
         {
-            _logger.LogInformation("Received PATCH request for author with ID {AuthorId}.", id);
-
-            if (patchDocument is null)
-            {
-                return LogAndReturnValidationProblem(_logger, "PatchDocument", "Patch document is null.", ModelState);
-            }
-
-            var author = await _context.Authors.FirstOrDefaultAsync(x => x.Id == id);
-            if (author is null)
-                return LogAndReturnNotFound(_logger, $"Author with ID {id} was not found.");
-
-            var authorPatchDTO = _mapper.Map<AuthorPatchDTO>(author);
-            patchDocument.ApplyTo(authorPatchDTO, ModelState);
-
-            var isValid = TryValidateModel(authorPatchDTO);
-            if (!isValid)
-                return LogAndReturnValidationProblem(_logger, "AuthorPatchDTO", "Validation failed.", ModelState);
-            
-
-            _mapper.Map(authorPatchDTO, author);
-            await _context.SaveChangesAsync();
-            await _outputCacheStore.EvictByTagAsync(_cache, default);
-
-            return LogAndReturnNoContent(_logger, $"Author with ID {id} patched successfully.");
+            bool? updated = await _authorPatchUseCase.Run(id, patchDocument, ModelState);
+            if (updated is null)
+                return BadRequest();
+            if (!(bool)updated)
+                return NotFound();
+            return NoContent();
         }
 
         [HttpDelete("{id:int}", Name = "DeleteAuthorV1")]
@@ -245,18 +131,10 @@ namespace LibraryAPI.Controllers.V1
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete([FromRoute] int id)
         {
-            _logger.LogInformation("Attempting to delete author with ID {AuthorId}", id);
-
-            var author = await _context.Authors.FirstOrDefaultAsync(x => x.Id == id);
-            if (author is null)
-                return LogAndReturnNotFound(_logger, $"Author with ID {id} was not found.");
-
-            _context.Remove(author);
-            await _context.SaveChangesAsync();
-            await _outputCacheStore.EvictByTagAsync(_cache, default);
-            await _fileStorageService.Delete(author.ImageUrl, _container);
-
-            return LogAndReturnNoContent(_logger, $"Author with ID {id} deleted successfully.");
+            bool deleted = await _deleteAuthorUseCase.Run(id);
+            if (!deleted)
+                return NotFound();
+            return NoContent();
         }
     }
 }
