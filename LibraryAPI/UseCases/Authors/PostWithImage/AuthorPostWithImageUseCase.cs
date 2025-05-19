@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.OutputCaching;
 
 namespace LibraryAPI.UseCases.Authors.PostWithImage
 {
-    public class AuthorPostWithImageUseCase
+    public class AuthorPostWithImageUseCase : IAuthorPostWithImageUseCase
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IMapper _mapper;

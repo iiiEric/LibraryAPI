@@ -4,7 +4,7 @@ using LibraryAPI.DTOs;
 
 namespace LibraryAPI.UseCases.Authors.GetById
 {
-    public class AuthorGetByIdUseCase
+    public class AuthorGetByIdUseCase : IAuthorGetByIdUseCase
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IMapper _mapper;

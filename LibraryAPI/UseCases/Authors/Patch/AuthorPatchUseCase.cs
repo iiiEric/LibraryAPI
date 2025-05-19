@@ -9,21 +9,17 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace LibraryAPI.UseCases.Authors.Patch
 {
-    public class AuthorPatchUseCase
+    public class AuthorPatchUseCase : IAuthorPatchUseCase
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthorPatchUseCase> _logger;
-        private readonly IOutputCacheStore _outputCacheStore;
-        private readonly IConfiguration _configuration;
 
-        public AuthorPatchUseCase(IAuthorRepository authorRepository, IMapper mapper, ILogger<AuthorPatchUseCase> logger, IOutputCacheStore outputCacheStore, IConfiguration configuration)
+        public AuthorPatchUseCase(IAuthorRepository authorRepository, IMapper mapper, ILogger<AuthorPatchUseCase> logger)
         {
             _authorRepository = authorRepository;
             _mapper = mapper;
             _logger = logger;
-            _outputCacheStore = outputCacheStore;
-            _configuration = configuration;
         }
 
         public async Task<bool?> Run(int authorId, JsonPatchDocument<AuthorPatchDTO> patchDocument, ModelStateDictionary modelState)

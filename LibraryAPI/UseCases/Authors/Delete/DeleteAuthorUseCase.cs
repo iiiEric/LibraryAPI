@@ -1,25 +1,19 @@
 ﻿using LibraryAPI.Constants;
 using LibraryAPI.DatabaseAccess.AuthorsRepository;
 using LibraryAPI.Services;
-using Microsoft.AspNetCore.OutputCaching;
 
 namespace LibraryAPI.UseCases.Authors.Delete
 {
-    public class DeleteAuthorUseCase
+    public class DeleteAuthorUseCase : IDeleteAuthorUseCase
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly ILogger<DeleteAuthorUseCase> _logger;
-        private readonly IOutputCacheStore _outputCacheStore;
-        private readonly IConfiguration _configuration;
         private readonly IFileStorageService _fileStorageService;
 
-        public DeleteAuthorUseCase(IAuthorRepository authorRepository, ILogger<DeleteAuthorUseCase> logger, IOutputCacheStore outputCacheStore,
-            IConfiguration configuration, IFileStorageService fileStorageService)
+        public DeleteAuthorUseCase(IAuthorRepository authorRepository, ILogger<DeleteAuthorUseCase> logger, IFileStorageService fileStorageService)
         {
             _authorRepository = authorRepository;
             _logger = logger;
-            _outputCacheStore = outputCacheStore;
-            _configuration = configuration;
             _fileStorageService = fileStorageService;
         }
 

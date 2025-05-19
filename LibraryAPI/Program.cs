@@ -74,14 +74,14 @@ builder.Services.AddScoped<ValidateBookFilter>();
 
 #region Repositories
 builder.Services.AddTransient<IAuthorRepository, SQLServerAuthorRepository>();
-builder.Services.AddTransient<AuthorsGetAllUseCase, AuthorsGetAllUseCase>();
-builder.Services.AddTransient<AuthorsGetByCriteriaUseCase, AuthorsGetByCriteriaUseCase>();
-builder.Services.AddTransient<AuthorGetByIdUseCase, AuthorGetByIdUseCase>();
-builder.Services.AddTransient<AuthorPostUseCase, AuthorPostUseCase>();
-builder.Services.AddTransient<AuthorPostWithImageUseCase, AuthorPostWithImageUseCase>();
-builder.Services.AddTransient<AuthorPutUseCase, AuthorPutUseCase>();
-builder.Services.AddTransient<AuthorPatchUseCase, AuthorPatchUseCase>();
-builder.Services.AddTransient<DeleteAuthorUseCase, DeleteAuthorUseCase>();
+builder.Services.AddTransient<IAuthorsGetAllUseCase, AuthorsGetAllUseCase>();
+builder.Services.AddTransient<IAuthorsGetByCriteriaUseCase, AuthorsGetByCriteriaUseCase>();
+builder.Services.AddTransient<IAuthorGetByIdUseCase, AuthorGetByIdUseCase>();
+builder.Services.AddTransient<IAuthorPostUseCase, AuthorPostUseCase>();
+builder.Services.AddTransient<IAuthorPostWithImageUseCase, AuthorPostWithImageUseCase>();
+builder.Services.AddTransient<IAuthorPutUseCase, AuthorPutUseCase>();
+builder.Services.AddTransient<IAuthorPatchUseCase, AuthorPatchUseCase>();
+builder.Services.AddTransient<IDeleteAuthorUseCase, DeleteAuthorUseCase>();
 #endregion
 
 

@@ -4,7 +4,7 @@ using LibraryAPI.DTOs;
 
 namespace LibraryAPI.UseCases.Authors.GetByCriteria
 {
-    public class AuthorsGetByCriteriaUseCase
+    public class AuthorsGetByCriteriaUseCase : IAuthorsGetByCriteriaUseCase
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IMapper _mapper;

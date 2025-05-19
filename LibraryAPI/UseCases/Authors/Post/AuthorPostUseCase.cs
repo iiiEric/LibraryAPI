@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.OutputCaching;
 
 namespace LibraryAPI.UseCases.Authors.Post
 {
-    public class AuthorPostUseCase
+    public class AuthorPostUseCase : IAuthorPostUseCase
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IMapper _mapper;

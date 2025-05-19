@@ -22,18 +22,18 @@ namespace LibraryAPI.Controllers.V1
     [Authorize(Policy = "Admin")]
     public class AuthorsController : ControllerBase
     {
-        private readonly AuthorsGetAllUseCase _authorsGetAllUseCase;
-        private readonly AuthorsGetByCriteriaUseCase _authorsGetByCriteriaUseCase;
-        private readonly AuthorGetByIdUseCase _authorsGetByIdUseCase;
-        private readonly AuthorPostUseCase _authorPostUseCase;
-        private readonly AuthorPostWithImageUseCase _authorPostWithImageUseCase;
-        private readonly AuthorPutUseCase _authorPutUseCase;
-        private readonly AuthorPatchUseCase _authorPatchUseCase;
-        private readonly DeleteAuthorUseCase _deleteAuthorUseCase;
+        private readonly IAuthorsGetAllUseCase _authorsGetAllUseCase;
+        private readonly IAuthorsGetByCriteriaUseCase _authorsGetByCriteriaUseCase;
+        private readonly IAuthorGetByIdUseCase _authorsGetByIdUseCase;
+        private readonly IAuthorPostUseCase _authorPostUseCase;
+        private readonly IAuthorPostWithImageUseCase _authorPostWithImageUseCase;
+        private readonly IAuthorPutUseCase _authorPutUseCase;
+        private readonly IAuthorPatchUseCase _authorPatchUseCase;
+        private readonly IDeleteAuthorUseCase _deleteAuthorUseCase;
 
-        public AuthorsController(AuthorsGetAllUseCase authorsGetAllUseCase, AuthorsGetByCriteriaUseCase authorsGetByCriteriaUseCase, AuthorGetByIdUseCase authorGetByIdUseCase,
-            AuthorPostUseCase authorPostUseCase, AuthorPostWithImageUseCase authorPostWithImageUseCase, AuthorPutUseCase authorPutUseCase, AuthorPatchUseCase authorPatchUseCase,
-            DeleteAuthorUseCase deleteAuthorUseCase)
+        public AuthorsController(IAuthorsGetAllUseCase authorsGetAllUseCase, IAuthorsGetByCriteriaUseCase authorsGetByCriteriaUseCase, IAuthorGetByIdUseCase authorGetByIdUseCase,
+            IAuthorPostUseCase authorPostUseCase, IAuthorPostWithImageUseCase authorPostWithImageUseCase, IAuthorPutUseCase authorPutUseCase, IAuthorPatchUseCase authorPatchUseCase,
+            IDeleteAuthorUseCase deleteAuthorUseCase)
         {
             _authorsGetAllUseCase = authorsGetAllUseCase;
             _authorsGetByCriteriaUseCase = authorsGetByCriteriaUseCase;

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.OutputCaching;
 
 namespace LibraryAPI.UseCases.Authors.Put
 {
-    public class AuthorPutUseCase
+    public class AuthorPutUseCase : IAuthorPutUseCase
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IMapper _mapper;
