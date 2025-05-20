@@ -1,11 +1,6 @@
 ﻿using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LibraryAPITests.UnitTests.Builders
 {
@@ -15,7 +10,7 @@ namespace LibraryAPITests.UnitTests.Builders
         public void Builder_ShouldSetAllProperties<TClass, TBuilder>()
         {
             // Act
-            var classProperties = typeof(TClass).GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
+            var classProperties = typeof(TClass).GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(p => p.SetMethod != null).ToList();
             var builderFields = typeof(TBuilder).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
 
             // Assert
@@ -39,6 +34,30 @@ namespace LibraryAPITests.UnitTests.Builders
         public void AuthorCreationDTOBuilder_ShouldSetAllProperties()
         {
             Builder_ShouldSetAllProperties<AuthorCreationDTO, AuthorCreationDTOBuilder>();
+        }
+
+        [TestMethod]
+        public void AuthorDTOBuilder_ShouldSetAllProperties()
+        {
+            Builder_ShouldSetAllProperties<AuthorDTO, AuthorDTOBuilder>();
+        }
+
+        [TestMethod]
+        public void AuthorFilterDTOBuilder_ShouldSetAllProperties()
+        {
+            Builder_ShouldSetAllProperties<AuthorFilterDTO, AuthorFilterDTOBuilder>();
+        }
+
+        [TestMethod]
+        public void AuthorWithBooksDTOBuilder_ShouldSetAllProperties()
+        {
+            Builder_ShouldSetAllProperties<AuthorWithBooksDTO, AuthorWithBooksDTOBuilder>();
+        }
+
+        [TestMethod]
+        public void AuthorCreationWithImageDTOBuilder_ShouldSetAllProperties()
+        {
+            Builder_ShouldSetAllProperties<AuthorCreationWithImageDTO, AuthorCreationWithImageDTOBuilder>();
         }
     }
 }

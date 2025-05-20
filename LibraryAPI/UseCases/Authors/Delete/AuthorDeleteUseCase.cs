@@ -4,13 +4,13 @@ using LibraryAPI.Services;
 
 namespace LibraryAPI.UseCases.Authors.Delete
 {
-    public class DeleteAuthorUseCase : IDeleteAuthorUseCase
+    public class AuthorDeleteUseCase : IAuthorDeleteUseCase
     {
         private readonly IAuthorRepository _authorRepository;
-        private readonly ILogger<DeleteAuthorUseCase> _logger;
+        private readonly ILogger<AuthorDeleteUseCase> _logger;
         private readonly IFileStorageService _fileStorageService;
 
-        public DeleteAuthorUseCase(IAuthorRepository authorRepository, ILogger<DeleteAuthorUseCase> logger, IFileStorageService fileStorageService)
+        public AuthorDeleteUseCase(IAuthorRepository authorRepository, ILogger<AuthorDeleteUseCase> logger, IFileStorageService fileStorageService)
         {
             _authorRepository = authorRepository;
             _logger = logger;

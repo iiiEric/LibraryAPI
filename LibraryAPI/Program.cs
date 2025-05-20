@@ -81,7 +81,7 @@ builder.Services.AddTransient<IAuthorPostUseCase, AuthorPostUseCase>();
 builder.Services.AddTransient<IAuthorPostWithImageUseCase, AuthorPostWithImageUseCase>();
 builder.Services.AddTransient<IAuthorPutUseCase, AuthorPutUseCase>();
 builder.Services.AddTransient<IAuthorPatchUseCase, AuthorPatchUseCase>();
-builder.Services.AddTransient<IDeleteAuthorUseCase, DeleteAuthorUseCase>();
+builder.Services.AddTransient<IAuthorDeleteUseCase, AuthorDeleteUseCase>();
 #endregion
 
 

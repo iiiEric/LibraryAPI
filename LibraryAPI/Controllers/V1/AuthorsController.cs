@@ -29,11 +29,11 @@ namespace LibraryAPI.Controllers.V1
         private readonly IAuthorPostWithImageUseCase _authorPostWithImageUseCase;
         private readonly IAuthorPutUseCase _authorPutUseCase;
         private readonly IAuthorPatchUseCase _authorPatchUseCase;
-        private readonly IDeleteAuthorUseCase _deleteAuthorUseCase;
+        private readonly IAuthorDeleteUseCase _deleteAuthorUseCase;
 
         public AuthorsController(IAuthorsGetAllUseCase authorsGetAllUseCase, IAuthorsGetByCriteriaUseCase authorsGetByCriteriaUseCase, IAuthorGetByIdUseCase authorGetByIdUseCase,
             IAuthorPostUseCase authorPostUseCase, IAuthorPostWithImageUseCase authorPostWithImageUseCase, IAuthorPutUseCase authorPutUseCase, IAuthorPatchUseCase authorPatchUseCase,
-            IDeleteAuthorUseCase deleteAuthorUseCase)
+            IAuthorDeleteUseCase deleteAuthorUseCase)
         {
             _authorsGetAllUseCase = authorsGetAllUseCase;
             _authorsGetByCriteriaUseCase = authorsGetByCriteriaUseCase;
