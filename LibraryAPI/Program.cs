@@ -1,5 +1,7 @@
 using LibraryAPI.Data;
+using LibraryAPI.DatabaseAccess.AuthorsCollectionsRepository;
 using LibraryAPI.DatabaseAccess.AuthorsRepository;
+using LibraryAPI.DatabaseAccess.BooksRepository;
 using LibraryAPI.Entities;
 using LibraryAPI.Middlewares;
 using LibraryAPI.Services;
@@ -12,6 +14,13 @@ using LibraryAPI.UseCases.Authors.Patch;
 using LibraryAPI.UseCases.Authors.Post;
 using LibraryAPI.UseCases.Authors.PostWithImage;
 using LibraryAPI.UseCases.Authors.Put;
+using LibraryAPI.UseCases.AuthorsCollections.AuthorsCollectionsPostUseCase;
+using LibraryAPI.UseCases.AuthorsCollections.AuthorsGetByIdsUseCase;
+using LibraryAPI.UseCases.Books.Delete;
+using LibraryAPI.UseCases.Books.GetAll;
+using LibraryAPI.UseCases.Books.GetById;
+using LibraryAPI.UseCases.Books.Post;
+using LibraryAPI.UseCases.Books.Put;
 using LibraryAPI.Utils;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
@@ -73,6 +82,10 @@ builder.Services.AddTransient<IFileStorageService, AzureFileStorageService>();
 builder.Services.AddScoped<ValidateBookFilter>();
 
 #region Repositories
+builder.Services.AddTransient<IAuthorCollectionsRepository, SQLServerAuthorColletionRepository>();
+builder.Services.AddTransient<IAuthorsCollectionsGetByIdsUseCase, AuthorsCollectionsGetByIdsUseCase>();
+builder.Services.AddTransient<IAuthorsCollectionsPostUseCase, AuthorsCollectionsPostUseCase>();
+
 builder.Services.AddTransient<IAuthorRepository, SQLServerAuthorRepository>();
 builder.Services.AddTransient<IAuthorsGetAllUseCase, AuthorsGetAllUseCase>();
 builder.Services.AddTransient<IAuthorsGetByCriteriaUseCase, AuthorsGetByCriteriaUseCase>();
@@ -82,6 +95,15 @@ builder.Services.AddTransient<IAuthorPostWithImageUseCase, AuthorPostWithImageUs
 builder.Services.AddTransient<IAuthorPutUseCase, AuthorPutUseCase>();
 builder.Services.AddTransient<IAuthorPatchUseCase, AuthorPatchUseCase>();
 builder.Services.AddTransient<IAuthorDeleteUseCase, AuthorDeleteUseCase>();
+
+builder.Services.AddTransient<IBookRepository, SQLServerBookRepository>();
+builder.Services.AddTransient<IBooksGetAllUseCase, BooksGetAllUseCase>();
+builder.Services.AddTransient<IBookGetByIdUseCase, BookGetByIdUseCase>();
+builder.Services.AddTransient<IBookPostUseCase, BookPostUseCase>();
+builder.Services.AddTransient<IBookPutUseCase, BookPutUseCase>();
+builder.Services.AddTransient<IBookDeleteUseCase, BookDeleteUseCase>();
+
+
 #endregion
 
 

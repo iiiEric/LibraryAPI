@@ -4,7 +4,6 @@ using LibraryAPI.DatabaseAccess.AuthorsRepository;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
 using LibraryAPI.Services;
-using Microsoft.AspNetCore.OutputCaching;
 
 namespace LibraryAPI.UseCases.Authors.Put
 {
@@ -13,18 +12,13 @@ namespace LibraryAPI.UseCases.Authors.Put
         private readonly IAuthorRepository _authorRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthorPutUseCase> _logger;
-        private readonly IOutputCacheStore _outputCacheStore;
-        private readonly IConfiguration _configuration;
         private readonly IFileStorageService _fileStorageService;
 
-        public AuthorPutUseCase(IAuthorRepository authorRepository, IMapper mapper, ILogger<AuthorPutUseCase> logger, IOutputCacheStore outputCacheStore,
-            IConfiguration configuration, IFileStorageService fileStorageService)
+        public AuthorPutUseCase(IAuthorRepository authorRepository, IMapper mapper, ILogger<AuthorPutUseCase> logger, IFileStorageService fileStorageService)
         {
             _authorRepository = authorRepository;
             _mapper = mapper;
             _logger = logger;
-            _outputCacheStore = outputCacheStore;
-            _configuration = configuration;
             _fileStorageService = fileStorageService;
         }
 

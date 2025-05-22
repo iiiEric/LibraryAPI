@@ -9,7 +9,7 @@ namespace LibraryAPI.DatabaseAccess.AuthorsRepository
 
         Task<bool> Exists(int authorId);
 
-        Task<IEnumerable<Author>> GetAll(PaginationDTO paginationDTO);
+        Task<IEnumerable<Author>> GetAll(HttpContext httpContext, PaginationDTO paginationDTO);
 
         Task<IEnumerable<Author>> GetByCriteria(AuthorFilterDTO authorFilterDTO);
 

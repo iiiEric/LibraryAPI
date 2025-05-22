@@ -17,10 +17,10 @@ namespace LibraryAPI.UseCases.Authors.GetAll
             _logger = logger;
         }
 
-        public async Task<IEnumerable<AuthorDTO>> Run(PaginationDTO paginationDTO)
+        public async Task<IEnumerable<AuthorDTO>> Run(HttpContext httpContext, PaginationDTO paginationDTO)
         {
             _logger.LogInformation("Retrieving all authors.");
-            var authors = await _authorRepository.GetAll(paginationDTO);
+            var authors = await _authorRepository.GetAll(httpContext, paginationDTO);
             var authorsDTO = _mapper.Map<IEnumerable<AuthorDTO>>(authors);
             return authorsDTO;
         }

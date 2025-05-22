@@ -11,16 +11,12 @@ namespace LibraryAPI.UseCases.Authors.Post
         private readonly IAuthorRepository _authorRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthorPostUseCase> _logger;
-        private readonly IOutputCacheStore _outputCacheStore;
-        private readonly IConfiguration _configuration;
 
-        public AuthorPostUseCase(IAuthorRepository authorRepository, IMapper mapper, ILogger<AuthorPostUseCase> logger, IOutputCacheStore outputCacheStore, IConfiguration configuration)
+        public AuthorPostUseCase(IAuthorRepository authorRepository, IMapper mapper, ILogger<AuthorPostUseCase> logger)
         {
             _authorRepository = authorRepository;
             _mapper = mapper;
             _logger = logger;
-            _outputCacheStore = outputCacheStore;
-            _configuration = configuration;
         }
 
         public async Task<AuthorDTO> Run(AuthorCreationDTO authorCreationDTO)

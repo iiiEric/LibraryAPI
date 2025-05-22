@@ -29,7 +29,7 @@ namespace LibraryAPI.Controllers.V1
         private readonly IAuthorPostWithImageUseCase _authorPostWithImageUseCase;
         private readonly IAuthorPutUseCase _authorPutUseCase;
         private readonly IAuthorPatchUseCase _authorPatchUseCase;
-        private readonly IAuthorDeleteUseCase _deleteAuthorUseCase;
+        private readonly IAuthorDeleteUseCase _authorDeleteUseCase;
 
         public AuthorsController(IAuthorsGetAllUseCase authorsGetAllUseCase, IAuthorsGetByCriteriaUseCase authorsGetByCriteriaUseCase, IAuthorGetByIdUseCase authorGetByIdUseCase,
             IAuthorPostUseCase authorPostUseCase, IAuthorPostWithImageUseCase authorPostWithImageUseCase, IAuthorPutUseCase authorPutUseCase, IAuthorPatchUseCase authorPatchUseCase,
@@ -42,24 +42,24 @@ namespace LibraryAPI.Controllers.V1
             _authorPostWithImageUseCase = authorPostWithImageUseCase;
             _authorPutUseCase = authorPutUseCase;
             _authorPatchUseCase = authorPatchUseCase;
-            _deleteAuthorUseCase = deleteAuthorUseCase;
+            _authorDeleteUseCase = deleteAuthorUseCase;
         }
 
         [HttpGet(Name = "GetAuthorsV1")]
         [AllowAnonymous]
         [OutputCache(Tags = [CacheTags.Authors])]
         [EndpointSummary("Retrieves a paginated list of authors.")]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<AuthorDTO>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<AuthorDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
-            var authorsDTO = await _authorsGetAllUseCase.Run(paginationDTO);
+            var authorsDTO = await _authorsGetAllUseCase.Run(HttpContext, paginationDTO);
             return Ok(authorsDTO);
         }
 
         [HttpGet("filterV1", Name = "GetAuthorsByCriteriaV1")]
         [AllowAnonymous]
         [EndpointSummary("Retrieves a list of authors filtered by the specified criteria.")]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<object>>> GetByCriteria([FromQuery] AuthorFilterDTO authorFilterDTO)
         {
             var authorsObject = await _authorsGetByCriteriaUseCase.Run(authorFilterDTO);
@@ -70,8 +70,8 @@ namespace LibraryAPI.Controllers.V1
         [AllowAnonymous]
         [OutputCache(Tags = [CacheTags.Authors])]
         [EndpointSummary("Retrieves a single author with their books by the specified author ID.")]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(AuthorWithBooksDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<AuthorWithBooksDTO>> Get([FromRoute][Description("Author Id")] int id)
         {
             var authorWithBooksDTO = await _authorsGetByIdUseCase.Run(id);
@@ -82,7 +82,7 @@ namespace LibraryAPI.Controllers.V1
 
         [HttpPost(Name = "CreateAuthorV1")]
         [EndpointSummary("Creates a new author from the provided data.")]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(AuthorWithBooksDTO), StatusCodes.Status201Created)]
         public async Task<ActionResult> Post([FromBody] AuthorCreationDTO authorCreationDTO)
         {
             var authorDTO = await _authorPostUseCase.Run(authorCreationDTO);
@@ -91,7 +91,7 @@ namespace LibraryAPI.Controllers.V1
 
         [HttpPost("with-image", Name = "CreateAuthorWithImageV1")]
         [EndpointSummary("Creates a new author with an image from the provided data.")]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(AuthorWithBooksDTO), StatusCodes.Status201Created)]
         public async Task<ActionResult> PostWithImage([FromForm] AuthorCreationWithImageDTO authorCreationWithImageDTO)
         {
             var authorDTO = await _authorPostWithImageUseCase.Run(authorCreationWithImageDTO);
@@ -100,8 +100,8 @@ namespace LibraryAPI.Controllers.V1
 
         [HttpPut("{id:int}", Name = "UpdateAuthorV1")]
         [EndpointSummary("Updates an existing author with the provided data and image.")]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status204NoContent)]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Put([FromRoute] int id, [FromForm] AuthorCreationWithImageDTO authorCreationWithImageDTO)
         {
             bool updated = await _authorPutUseCase.Run(id, authorCreationWithImageDTO);
@@ -112,9 +112,9 @@ namespace LibraryAPI.Controllers.V1
 
         [HttpPatch("{id:int}", Name = "PatchAuthorV1")]
         [EndpointSummary("Partially updates an existing author with the provided patch document.")]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status204NoContent)]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Patch([FromRoute] int id, [FromBody] JsonPatchDocument<AuthorPatchDTO> patchDocument)
         {
             bool? updated = await _authorPatchUseCase.Run(id, patchDocument, ModelState);
@@ -127,11 +127,11 @@ namespace LibraryAPI.Controllers.V1
 
         [HttpDelete("{id:int}", Name = "DeleteAuthorV1")]
         [EndpointSummary("Deletes an author by the specified author ID.")]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status204NoContent)]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete([FromRoute] int id)
         {
-            bool deleted = await _deleteAuthorUseCase.Run(id);
+            bool deleted = await _authorDeleteUseCase.Run(id);
             if (!deleted)
                 return NotFound();
             return NoContent();

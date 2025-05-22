@@ -1,15 +1,18 @@
 ﻿using AutoMapper;
-using LibraryAPI.Data;
+using LibraryAPI.Constants;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
-using LibraryAPI.Services;
+using LibraryAPI.UseCases.Comments.Delete;
+using LibraryAPI.UseCases.Comments.GetByBookId;
+using LibraryAPI.UseCases.Comments.GetById;
+using LibraryAPI.UseCases.Comments.Patch;
+using LibraryAPI.UseCases.Comments.Post;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
-using static LibraryAPI.Utils.ResponseHelper;
 
 namespace LibraryAPI.Controllers.V1
 {
@@ -18,47 +21,40 @@ namespace LibraryAPI.Controllers.V1
     [Authorize]
     public class CommentsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
-        private readonly ILogger<BooksController> _logger;
-        private readonly IUsersService _usersServicies;
-        private readonly IOutputCacheStore _outputCacheStore;
-        private const string _cache = "CommentsCache";
+        private readonly ICommentDeleteUseCase _commentDeleteUseCase;
+        private readonly ICommentGetByBookIdUseCase _commentGetByBookIdUseCase;
+        private readonly ICommentGetByIdUseCase _commentGetByIdUseCase;
+        private readonly ICommentPatchUseCase _commentPatchUseCase;
+        private readonly ICommentPostUseCase _commentPostUseCase;
 
-        public CommentsController(ApplicationDbContext context, IMapper mapper, ILogger<BooksController> logger, IUsersService usersServicies, IOutputCacheStore outputCacheStore)
+
+        public CommentsController(ICommentDeleteUseCase commentDeleteUseCase, ICommentGetByBookIdUseCase commentGetByBookIdUseCase, ICommentGetByIdUseCase commentGetByIdUseCase,
+            ICommentPatchUseCase commentPatchUseCase, ICommentPostUseCase commentPostUseCase)
         {
-            _context = context;
-            _mapper = mapper;
-            _logger = logger;
-            _usersServicies = usersServicies;
-            _outputCacheStore = outputCacheStore;
+            _commentDeleteUseCase = commentDeleteUseCase;
+            _commentGetByBookIdUseCase = commentGetByBookIdUseCase;
+            _commentGetByIdUseCase = commentGetByIdUseCase;
+            _commentPatchUseCase = commentPatchUseCase;
+            _commentPostUseCase = commentPostUseCase;
         }
 
         [HttpGet(Name = "GetCommentsV1")]
         [AllowAnonymous]
-        [OutputCache(Tags = [_cache])]
+        [OutputCache(Tags = [CacheTags.Comments])]
         [EndpointSummary("Retrieves a list of comments for the specified book.")]
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)] //Corregir ProducesResponseType!!!!!!
         public async Task<ActionResult<List<CommentDTO>>> Get(int bookId)
         {
-            var existsBook = await _context.Books.AnyAsync(x => x.Id == bookId);
-            if (!existsBook)
-                return LogAndReturnNotFound(_logger, $"Book with ID {bookId} was not found.");
-
-            var comments = await _context.Comments
-                .Include(x => x.User)
-                .Where(x => x.BookId == bookId)
-                .OrderByDescending(x => x.PublicationDate)
-                .ToListAsync();
-            var commentsDTO = _mapper.Map<List<CommentDTO>>(comments);
-
+            var commentsDTO = await _commentGetByBookIdUseCase.Run(bookId);
+            if (commentsDTO is null)
+                return NotFound();
             return Ok(commentsDTO);
         }
 
         [HttpGet("{id:guid}", Name = "GetCommentV1")]
         [AllowAnonymous]
-        [OutputCache(Tags = [_cache])]
+        [OutputCache(Tags = [CacheTags.Comments])]
         [EndpointSummary("Retrieves a single comment by its specified ID.")]
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
         [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]

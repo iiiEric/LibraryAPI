@@ -1,13 +1,10 @@
-﻿using AutoMapper;
-using LibraryAPI.Data;
-using LibraryAPI.DTOs;
+﻿using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
+using LibraryAPI.UseCases.AuthorsCollections.AuthorsCollectionsPostUseCase;
+using LibraryAPI.UseCases.AuthorsCollections.AuthorsGetByIdsUseCase;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
-using static LibraryAPI.Utils.ResponseHelper;
-
 namespace LibraryAPI.Controllers.V1
 {
     [ApiController]
@@ -15,79 +12,37 @@ namespace LibraryAPI.Controllers.V1
     [Authorize(Policy = "Admin")]
     public class AuthorsCollectionController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
-        private readonly ILogger<AuthorsController> _logger;
+        private readonly IAuthorsCollectionsGetByIdsUseCase _authorsGetByIdsUseCase;
+        private readonly IAuthorsCollectionsPostUseCase _authorsCollectionsPostUseCase;
 
-        public AuthorsCollectionController(ApplicationDbContext context, IMapper mapper, ILogger<AuthorsController> logger)
+        public AuthorsCollectionController(IAuthorsCollectionsGetByIdsUseCase authorsGetByIdsUseCase, IAuthorsCollectionsPostUseCase authorsCollectionsPostUseCase)
         {
-            _context = context;
-            _mapper = mapper;
-            _logger = logger;
+            _authorsGetByIdsUseCase = authorsGetByIdsUseCase;
+            _authorsCollectionsPostUseCase = authorsCollectionsPostUseCase;
         }
 
         [HttpGet("{ids}", Name = "GetAuthorsByIdsV1")]
         [AllowAnonymous]
         [EndpointSummary("Retrieves a list of authors along with their books based on the provided author IDs.")]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status200OK)]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(List<AuthorWithBooksDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<List<AuthorWithBooksDTO>>> Get([FromRoute][Description("Author Ids")] string ids)
         {
-            _logger.LogInformation("Retrieving authors with IDs {AuthorsIds}", ids);
-
-            var collectionIds = new List<int>();
-            foreach (var id in ids.Split(","))
-            {
-                if (int.TryParse(id, out int idInt))
-                    collectionIds.Add(idInt);
-            }
-
-            if (!collectionIds.Any())
-                return LogAndReturnValidationProblem(_logger, nameof(ids), "No valid author IDs provided.", ModelState);
-
-            var authors = await _context.Authors
-                 .Include(x => x.Books)
-                 .ThenInclude(x => x.Book)
-                 .Where(x => collectionIds.Contains(x.Id))
-                 .ToListAsync();
-
-            if (authors.Count != collectionIds.Count)
-            {
-                var authorsExistsIds = authors.Select(x => x.Id).ToList();
-                var authorsNotExists = collectionIds.Except(authorsExistsIds);
-                var authorsNotExistsString = string.Join(", ", authorsNotExists);
-                return LogAndReturnNotFound(_logger, $"Some author IDs were not found: {authorsNotExistsString}");
-            }
-
-            var authorsWithBooksDTO = _mapper.Map<List<AuthorWithBooksDTO>>(authors);
-
-            _logger.LogInformation("Authors with IDs {AuthorsIds} retrieved successfully.", ids);
-            return Ok(authorsWithBooksDTO);
+            var authorWithBooksDTO = await _authorsGetByIdsUseCase.Run(ids);
+            if (authorWithBooksDTO is null)
+                return BadRequest();
+            return Ok(authorWithBooksDTO);
         }
 
         [HttpPost(Name = "CreateAuthorsV1")]
         [EndpointSummary("Creates multiple authors from the provided data.")]
-        [ProducesResponseType<AuthorWithBooksDTO>(StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(IEnumerable<AuthorWithBooksDTO>), StatusCodes.Status201Created)]
         public async Task<ActionResult> Post([FromBody] IEnumerable<AuthorCreationDTO> authorsCreationDTO)
         {
-            var authors = _mapper.Map<IEnumerable<Author>>(authorsCreationDTO);
-
-            foreach (var author in authors)
-                _logger.LogInformation("Creating author with name '{Name}'", author.Name);
-
-            _context.AddRange(authors);
-            await _context.SaveChangesAsync();
-
-            var authorsDTO = _mapper.Map<IEnumerable<AuthorDTO>>(authors);
-            var ids = authors.Select(x => x.Id);
+            var authorsDTO = await _authorsCollectionsPostUseCase.Run(authorsCreationDTO);
+            var ids = authorsDTO.Select(x => x.Id);
             var idsString = string.Join(", ", ids);
-
-            foreach (var author in authors)
-                _logger.LogInformation("Author with ID {AuthorId} created successfully.", author.Id);
-
-            return LogAndReturnCreatedAtRoute(_logger, "GetAuthorsByIdsV1", new { ids = idsString }, authorsDTO,
-                $"Created authors with IDs: {idsString}");
+            return CreatedAtRoute("GetAuthorsByIdsV1", new { ids = idsString }, authorsDTO);
         }
     }
 }

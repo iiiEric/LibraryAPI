@@ -31,28 +31,28 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
             .WithBooks(new List<BookDTO>{new BookDTO { Id = 1, Title = "Game of thrones" }}).Build();
         #endregion
 
-        IAuthorsGetAllUseCase _authorsGetAllUseCase = null!;
+        IBookGetAllUseCase _authorsGetAllUseCase = null!;
         IAuthorsGetByCriteriaUseCase _authorsGetByCriteriaUseCase = null!;
-        IAuthorGetByIdUseCase _authorGetByIdUseCase = null!;
+        IBookGetByIdUseCase _authorGetByIdUseCase = null!;
         IAuthorPostUseCase _authorPostUseCase = null!;
         IAuthorPostWithImageUseCase _authorPostWithImageUseCase = null!;
-        IAuthorPutUseCase _authorPutUseCase = null!;
+        IBookPutUseCase _authorPutUseCase = null!;
         IAuthorPatchUseCase _authorPatchUseCase = null!;
-        IAuthorDeleteUseCase _authorDeleteUseCase = null!;
+        IBookDeleteUseCase _authorDeleteUseCase = null!;
         private string _databaseName = Guid.NewGuid().ToString();
         private AuthorsController _controller = null!;
 
         [TestInitialize]
         public void Setup()
         {
-            _authorsGetAllUseCase = Substitute.For<IAuthorsGetAllUseCase>();
+            _authorsGetAllUseCase = Substitute.For<IBookGetAllUseCase>();
             _authorsGetByCriteriaUseCase = Substitute.For<IAuthorsGetByCriteriaUseCase>();
-            _authorGetByIdUseCase = Substitute.For<IAuthorGetByIdUseCase>();
+            _authorGetByIdUseCase = Substitute.For<IBookGetByIdUseCase>();
             _authorPostUseCase = Substitute.For<IAuthorPostUseCase>();
             _authorPostWithImageUseCase = Substitute.For<IAuthorPostWithImageUseCase>();
-            _authorPutUseCase = Substitute.For<IAuthorPutUseCase>();
+            _authorPutUseCase = Substitute.For<IBookPutUseCase>();
             _authorPatchUseCase = Substitute.For<IAuthorPatchUseCase>();
-            _authorDeleteUseCase = Substitute.For<IAuthorDeleteUseCase>();
+            _authorDeleteUseCase = Substitute.For<IBookDeleteUseCase>();
             _controller = new AuthorsController(_authorsGetAllUseCase, _authorsGetByCriteriaUseCase, _authorGetByIdUseCase, _authorPostUseCase, _authorPostWithImageUseCase,
                 _authorPutUseCase, _authorPatchUseCase, _authorDeleteUseCase);
         }

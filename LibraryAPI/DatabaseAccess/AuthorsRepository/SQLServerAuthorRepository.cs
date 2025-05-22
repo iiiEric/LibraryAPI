@@ -13,15 +13,12 @@ namespace LibraryAPI.DatabaseAccess.AuthorsRepository
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<SQLServerAuthorRepository> _logger;
-        private readonly IConfiguration _configuration;
         private readonly IOutputCacheStore _outputCacheStore;
-        private const string AuthorsCacheKey = "CacheSettings:AuthorsCache";
 
-        public SQLServerAuthorRepository(ApplicationDbContext context, ILogger<SQLServerAuthorRepository> logger, IConfiguration configuration, IOutputCacheStore outputCacheStore)
+        public SQLServerAuthorRepository(ApplicationDbContext context, ILogger<SQLServerAuthorRepository> logger, IOutputCacheStore outputCacheStore)
         {
             _context = context;
             _logger = logger;
-            _configuration = configuration;
             _outputCacheStore = outputCacheStore;
         }
 
@@ -37,9 +34,10 @@ namespace LibraryAPI.DatabaseAccess.AuthorsRepository
             return exists;
         }
 
-        public async Task<IEnumerable<Author>> GetAll(PaginationDTO paginationDTO)
+        public async Task<IEnumerable<Author>> GetAll(HttpContext httpContext, PaginationDTO paginationDTO)
         {
             var queryable = _context.Authors.AsQueryable();
+            await httpContext.InsertHeaderPaginationParameters(queryable);
 
             var authors = await queryable
                 .OrderBy(x => x.Name)

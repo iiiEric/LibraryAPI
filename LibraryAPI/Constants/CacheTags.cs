@@ -4,5 +4,6 @@
     {
         public const string Authors = "AuthorsCacheTag";
         public const string Books = "BooksCacheTag";
+        public const string Comments = "CommentsCacheTag";
     }
 }
