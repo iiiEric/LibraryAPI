@@ -4,6 +4,7 @@ using LibraryAPI.DatabaseAccess.AuthorsRepository;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
 using LibraryAPI.Services;
+using LibraryAPI.Utils;
 
 namespace LibraryAPI.UseCases.Authors.Put
 {
@@ -22,7 +23,7 @@ namespace LibraryAPI.UseCases.Authors.Put
             _fileStorageService = fileStorageService;
         }
 
-        public async Task<bool> Run(int authorId, AuthorCreationWithImageDTO authorCreationWithImageDTO)
+        public async Task<Result> Run(int authorId, AuthorCreationWithImageDTO authorCreationWithImageDTO)
         {
             _logger.LogInformation("Updating author with ID '{ID}'", authorId);
 
@@ -30,7 +31,7 @@ namespace LibraryAPI.UseCases.Authors.Put
             if (!exists)
             {
                 _logger.LogWarning($"Author with ID {authorId} was not found.");
-                return false;
+                return Result.NotFound();
             }
 
             var author = _mapper.Map<Author>(authorCreationWithImageDTO);
@@ -39,14 +40,13 @@ namespace LibraryAPI.UseCases.Authors.Put
             if (authorCreationWithImageDTO.Image is not null)
             {
                 var currentImage = await _authorRepository.GetImageUrl(authorId);
-
                 var imageUrl = await _fileStorageService.Update(currentImage, StorageContainers.Authors, authorCreationWithImageDTO.Image);
                 author.ImageUrl = imageUrl;
             }
 
             await _authorRepository.Update(author);
             _logger.LogInformation($"Author with ID {author.Id} updated successfully.");
-            return true;
+            return Result.Success();
         }
     }
 }

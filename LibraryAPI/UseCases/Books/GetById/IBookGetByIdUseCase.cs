@@ -5,6 +5,6 @@ namespace LibraryAPI.UseCases.Books.GetById
 {
     public interface IBookGetByIdUseCase
     {
-        public Task<BookWithAuthorsDTO?> Run(int bookId);
+       Task<BookWithAuthorsDTO?> Run(int bookId);
     }
 }

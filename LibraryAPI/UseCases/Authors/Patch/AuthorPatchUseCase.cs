@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using LibraryAPI.Utils;
 
 namespace LibraryAPI.UseCases.Authors.Patch
 {
@@ -22,7 +23,7 @@ namespace LibraryAPI.UseCases.Authors.Patch
             _logger = logger;
         }
 
-        public async Task<bool?> Run(int authorId, JsonPatchDocument<AuthorPatchDTO> patchDocument, ModelStateDictionary modelState)
+        public async Task<Result> Run(int authorId, JsonPatchDocument<AuthorPatchDTO> patchDocument, ModelStateDictionary modelState)
         {
             _logger.LogInformation("Received PATCH request for author with ID {AuthorId}.", authorId);
 
@@ -30,30 +31,30 @@ namespace LibraryAPI.UseCases.Authors.Patch
             {
                 _logger.LogWarning("Patch document is null.");
                 modelState.AddModelError(nameof(patchDocument), "Patch document is null.");
-                return null;
+                return Result.BadRequest();
             }
 
             var author = await _authorRepository.GetById(authorId);
             if (author is null)
             {
                 _logger.LogWarning($"Author with ID {authorId} was not found.");
-                return false;
+                return Result.NotFound();
             }
 
-            var authorPatchDTO = _mapper.Map<AuthorPatchDTO>(author);
-            patchDocument.ApplyTo(authorPatchDTO, modelState);
+            var dto = _mapper.Map<AuthorPatchDTO>(author);
+            patchDocument.ApplyTo(dto, modelState);
 
             if (!modelState.IsValid)
             {
-                _logger.LogWarning("Validation failed.");
-                return null;
+                _logger.LogWarning("Patch document failed validation.");
+                return Result.ValidationError();
             }
 
-            _mapper.Map(authorPatchDTO, author);
+            _mapper.Map(dto, author);
             await _authorRepository.Update(author);
 
-            _logger.LogInformation($"Author with ID {author.Id} updated successfully.");
-            return true;
+            _logger.LogInformation($"Author with ID {author.Id} patched successfully.");
+            return Result.Success();
         }
     }
 }

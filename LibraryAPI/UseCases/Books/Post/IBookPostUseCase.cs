@@ -4,6 +4,6 @@ namespace LibraryAPI.UseCases.Books.Post
 {
     public interface IBookPostUseCase
     {
-        public Task<BookDTO> Run(BookCreationDTO bookCreationDTO);
+        Task<BookDTO> Run(BookCreationDTO bookCreationDTO);
     }
 }

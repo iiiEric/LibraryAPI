@@ -1,7 +1,9 @@
-﻿namespace LibraryAPI.UseCases.Books.Delete
+﻿using LibraryAPI.Utils;
+
+namespace LibraryAPI.UseCases.Books.Delete
 {
     public interface IBookDeleteUseCase
     {
-        public Task<bool> Run(int bookId);
+        Task<Result> Run(int bookId);
     }
 }

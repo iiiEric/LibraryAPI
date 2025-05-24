@@ -1,9 +1,10 @@
 ﻿using LibraryAPI.DTOs;
+using LibraryAPI.Utils;
 
 namespace LibraryAPI.UseCases.Books.Put
 {
     public interface IBookPutUseCase
     {
-        public Task<bool> Run(int bookId, BookCreationDTO bookCreationDTO);
+        Task<Result> Run(int bookId, BookCreationDTO bookCreationDTO);
     }
 }

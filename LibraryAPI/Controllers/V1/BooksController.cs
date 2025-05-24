@@ -76,10 +76,14 @@ namespace LibraryAPI.Controllers.V1
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Put([FromRoute] int id, [FromBody] BookCreationDTO bookCreationDTO)
         {
-            bool updated = await _bookPutUseCase.Run(id, bookCreationDTO);
-            if (!updated)
-                return NotFound();
-            return NoContent();
+            var result = await _bookPutUseCase.Run(id, bookCreationDTO);
+
+            return result.Type switch
+            {
+                ResultType.Success => NoContent(),
+                ResultType.NotFound => NotFound(),
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
+            };
         }
 
         [HttpDelete("{id:int}", Name = "DeleteBookV1")]
@@ -88,10 +92,14 @@ namespace LibraryAPI.Controllers.V1
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete([FromRoute] int id)
         {
-            bool deleted = await _bookDeleteUseCase.Run(id);
-            if (!deleted)
-                return NotFound();
-            return NoContent();
+            var result = await _bookDeleteUseCase.Run(id);
+
+            return result.Type switch
+            {
+                ResultType.Success => NoContent(),
+                ResultType.NotFound => NotFound(),
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
+            };
         }
     }
 }

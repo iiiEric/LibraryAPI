@@ -1,4 +1,5 @@
 ﻿using LibraryAPI.DatabaseAccess.BooksRepository;
+using LibraryAPI.Utils;
 
 namespace LibraryAPI.UseCases.Books.Delete
 {
@@ -13,7 +14,7 @@ namespace LibraryAPI.UseCases.Books.Delete
             _logger = logger;
         }
 
-        public async Task<bool> Run(int bookId)
+        public async Task<Result> Run(int bookId)
         {
             _logger.LogInformation("Attempting to delete book with ID {BookId}", bookId);
 
@@ -21,12 +22,12 @@ namespace LibraryAPI.UseCases.Books.Delete
             if (book is null)
             {
                 _logger.LogWarning($"Book with ID {bookId} was not found.");
-                return false;
+                return Result.NotFound();
             }
 
             await _bookRepository.Remove(book);
-            _logger.LogWarning($"Book with ID {bookId} deleted successfully.");
-            return true;
+            _logger.LogInformation($"Book with ID {bookId} deleted successfully.");
+            return Result.Success();
         }
     }
 }

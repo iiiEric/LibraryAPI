@@ -8,6 +8,7 @@ using LibraryAPI.UseCases.Authors.Patch;
 using LibraryAPI.UseCases.Authors.Post;
 using LibraryAPI.UseCases.Authors.PostWithImage;
 using LibraryAPI.UseCases.Authors.Put;
+using LibraryAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -104,10 +105,14 @@ namespace LibraryAPI.Controllers.V1
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Put([FromRoute] int id, [FromForm] AuthorCreationWithImageDTO authorCreationWithImageDTO)
         {
-            bool updated = await _authorPutUseCase.Run(id, authorCreationWithImageDTO);
-            if (!updated)
-                return NotFound();
-            return NoContent();
+            var result = await _authorPutUseCase.Run(id, authorCreationWithImageDTO);
+
+            return result.Type switch
+            {
+                ResultType.Success => NoContent(),
+                ResultType.NotFound => NotFound(),
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
+            };
         }
 
         [HttpPatch("{id:int}", Name = "PatchAuthorV1")]
@@ -117,12 +122,16 @@ namespace LibraryAPI.Controllers.V1
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Patch([FromRoute] int id, [FromBody] JsonPatchDocument<AuthorPatchDTO> patchDocument)
         {
-            bool? updated = await _authorPatchUseCase.Run(id, patchDocument, ModelState);
-            if (updated is null)
-                return BadRequest();
-            if (!(bool)updated)
-                return NotFound();
-            return NoContent();
+            var result = await _authorPatchUseCase.Run(id, patchDocument, ModelState);
+
+            return result.Type switch
+            {
+                ResultType.Success => NoContent(),
+                ResultType.NotFound => NotFound(),
+                ResultType.BadRequest => BadRequest(),
+                ResultType.ValidationError => ValidationProblem(ModelState),
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
+            };
         }
 
         [HttpDelete("{id:int}", Name = "DeleteAuthorV1")]
@@ -131,10 +140,14 @@ namespace LibraryAPI.Controllers.V1
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete([FromRoute] int id)
         {
-            bool deleted = await _authorDeleteUseCase.Run(id);
-            if (!deleted)
-                return NotFound();
-            return NoContent();
+            var result = await _authorDeleteUseCase.Run(id);
+
+            return result.Type switch
+            {
+                ResultType.Success => NoContent(),
+                ResultType.NotFound => NotFound(),
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
+            };
         }
     }
 }

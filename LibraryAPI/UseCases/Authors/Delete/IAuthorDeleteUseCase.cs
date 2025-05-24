@@ -1,7 +1,9 @@
-﻿namespace LibraryAPI.UseCases.Authors.Delete
+﻿using LibraryAPI.Utils;
+
+namespace LibraryAPI.UseCases.Authors.Delete
 {
     public interface IAuthorDeleteUseCase
     {
-        public Task<bool> Run(int authorId);
+        public Task<Result> Run(int authorId);
     }
 }

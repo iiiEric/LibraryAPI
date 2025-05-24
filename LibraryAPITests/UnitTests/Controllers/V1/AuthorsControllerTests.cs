@@ -8,6 +8,7 @@ using LibraryAPI.UseCases.Authors.Patch;
 using LibraryAPI.UseCases.Authors.Post;
 using LibraryAPI.UseCases.Authors.PostWithImage;
 using LibraryAPI.UseCases.Authors.Put;
+using LibraryAPI.Utils;
 using LibraryAPITests.UnitTests.Builders;
 using LibraryAPITests.Utilidades;
 using Microsoft.AspNetCore.JsonPatch;
@@ -28,31 +29,31 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
         private AuthorFilterDTO _defaultAuthorFilterDTO = new AuthorFilterDTOBuilder().WithName("George Raymond").WithSurname1("Richard").WithBookTitle("Game of thrones").Build();
         private AuthorFilterDTO _nonMatchingFilterDTO = new AuthorFilterDTOBuilder().WithName("Zacarias").WithSurname1("Z").Build();
         private AuthorWithBooksDTO _defaultAuthorWithBooksDTO = new AuthorWithBooksDTOBuilder().WithId(1).WithFullName("George Raymond Richard")
-            .WithBooks(new List<BookDTO>{new BookDTO { Id = 1, Title = "Game of thrones" }}).Build();
+            .WithBooks(new List<BookDTO> {new BookDTO { Id = 1, Title = "Game of thrones" }}).Build();
         #endregion
 
-        IBookGetAllUseCase _authorsGetAllUseCase = null!;
+        IAuthorsGetAllUseCase _authorsGetAllUseCase = null!;
         IAuthorsGetByCriteriaUseCase _authorsGetByCriteriaUseCase = null!;
-        IBookGetByIdUseCase _authorGetByIdUseCase = null!;
+        IAuthorGetByIdUseCase _authorGetByIdUseCase = null!;
         IAuthorPostUseCase _authorPostUseCase = null!;
         IAuthorPostWithImageUseCase _authorPostWithImageUseCase = null!;
-        IBookPutUseCase _authorPutUseCase = null!;
+        IAuthorPutUseCase _authorPutUseCase = null!;
         IAuthorPatchUseCase _authorPatchUseCase = null!;
-        IBookDeleteUseCase _authorDeleteUseCase = null!;
+        IAuthorDeleteUseCase _authorDeleteUseCase = null!;
         private string _databaseName = Guid.NewGuid().ToString();
         private AuthorsController _controller = null!;
 
         [TestInitialize]
         public void Setup()
         {
-            _authorsGetAllUseCase = Substitute.For<IBookGetAllUseCase>();
+            _authorsGetAllUseCase = Substitute.For<IAuthorsGetAllUseCase>();
             _authorsGetByCriteriaUseCase = Substitute.For<IAuthorsGetByCriteriaUseCase>();
-            _authorGetByIdUseCase = Substitute.For<IBookGetByIdUseCase>();
+            _authorGetByIdUseCase = Substitute.For<IAuthorGetByIdUseCase>();
             _authorPostUseCase = Substitute.For<IAuthorPostUseCase>();
             _authorPostWithImageUseCase = Substitute.For<IAuthorPostWithImageUseCase>();
-            _authorPutUseCase = Substitute.For<IBookPutUseCase>();
+            _authorPutUseCase = Substitute.For<IAuthorPutUseCase>();
             _authorPatchUseCase = Substitute.For<IAuthorPatchUseCase>();
-            _authorDeleteUseCase = Substitute.For<IBookDeleteUseCase>();
+            _authorDeleteUseCase = Substitute.For<IAuthorDeleteUseCase>();
             _controller = new AuthorsController(_authorsGetAllUseCase, _authorsGetByCriteriaUseCase, _authorGetByIdUseCase, _authorPostUseCase, _authorPostWithImageUseCase,
                 _authorPutUseCase, _authorPatchUseCase, _authorDeleteUseCase);
         }
@@ -61,7 +62,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
         public async Task Get_WhenAuthorIdDoesNotExist_ReturnsNotFound()
         {
             // Arrange
-            _authorGetByIdUseCase.Run(999).Returns((AuthorWithBooksDTO?)null);
+            _authorGetByIdUseCase.Run(1).Returns((AuthorWithBooksDTO?)null);
 
             // Act
             var response = await _controller.Get(1);
@@ -187,7 +188,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
             mockedImage.Name.Returns("Image");
             AuthorCreationWithImageDTO _defaultAuthorCreationWithImageDTO = new AuthorCreationWithImageDTOBuilder().WithName("George Raymond").WithSurname1("Richard")
                 .WithImage(mockedImage).Build();
-            _authorPutUseCase.Run(999, _defaultAuthorCreationWithImageDTO).Returns(Task.FromResult(false));
+            _authorPutUseCase.Run(1, _defaultAuthorCreationWithImageDTO).Returns(Task.FromResult(Result.NotFound()));
 
             // Act
             var response = await _controller.Put(1, _defaultAuthorCreationWithImageDTO);
@@ -216,7 +217,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
             mockedImage.Name.Returns("Image");
             AuthorCreationWithImageDTO _defaultAuthorCreationWithImageDTO = new AuthorCreationWithImageDTOBuilder().WithName("George Raymond").WithSurname1("Richard")
                 .WithImage(mockedImage).Build();
-            _authorPutUseCase.Run(1, _defaultAuthorCreationWithImageDTO).Returns(Task.FromResult(true));
+            _authorPutUseCase.Run(1, _defaultAuthorCreationWithImageDTO).Returns(Task.FromResult(Result.Success()));
 
             // Act
             var response = await _controller.Put(1, _defaultAuthorCreationWithImageDTO);
@@ -231,7 +232,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
         public async Task Patch_WhenPatchDocumentIsNull_ReturnsBadRequest()
         {
             // Arrange
-            _authorPatchUseCase.Run(1, null, Arg.Any<ModelStateDictionary>()).Returns((bool?)null);
+            _authorPatchUseCase.Run(1, null, Arg.Any<ModelStateDictionary>()).Returns(Task.FromResult(Result.BadRequest()));
 
             // Act
             var response = await _controller.Patch(1, null!);
@@ -247,7 +248,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
         {
             // Arrange
             var patchDoc = new JsonPatchDocument<AuthorPatchDTO>();
-            _authorPatchUseCase.Run(1, patchDoc, Arg.Any<ModelStateDictionary>()).Returns(false);
+            _authorPatchUseCase.Run(1, patchDoc, Arg.Any<ModelStateDictionary>()).Returns(Task.FromResult(Result.NotFound()));
 
             // Act
             var response = await _controller.Patch(1, patchDoc);
@@ -267,7 +268,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
             patchDoc.Replace(a => a.Surname1, "Allende");
 
             // Simular que el caso de uso devuelve true (actualizado correctamente)
-            _authorPatchUseCase.Run(1, patchDoc, Arg.Any<ModelStateDictionary>()).Returns(true);
+            _authorPatchUseCase.Run(1, patchDoc, Arg.Any<ModelStateDictionary>()).Returns(Task.FromResult(Result.Success()));
 
             // Act
             var response = await _controller.Patch(1, patchDoc);
@@ -282,7 +283,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
         public async Task Delete_WhenAuthorIdDoesNotExist_ReturnsNotFound()
         {
             // Arrange
-            _authorDeleteUseCase.Run(1).Returns(Task.FromResult(false));
+            _authorDeleteUseCase.Run(1).Returns(Task.FromResult(Result.NotFound()));
 
             // Act
             var response = await _controller.Delete(1);
@@ -298,7 +299,7 @@ namespace LibraryAPITests.UnitTests.Controllers.V1
         public async Task Delete_WhenAuthorIdDoesExist_DeletesAuthor()
         {
             // Arrange
-            _authorDeleteUseCase.Run(1).Returns(Task.FromResult(true));
+            _authorDeleteUseCase.Run(1).Returns(Task.FromResult(Result.Success()));
 
             // Act
             var response = await _controller.Delete(1);

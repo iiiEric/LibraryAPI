@@ -3,6 +3,7 @@ using LibraryAPI.Constants;
 using LibraryAPI.DatabaseAccess.BooksRepository;
 using LibraryAPI.DTOs;
 using LibraryAPI.Entities;
+using LibraryAPI.Utils;
 
 namespace LibraryAPI.UseCases.Books.Put
 {
@@ -19,7 +20,7 @@ namespace LibraryAPI.UseCases.Books.Put
             _logger = logger;
         }
 
-        public async Task<bool> Run(int bookId, BookCreationDTO bookCreationDTO)
+        public async Task<Result> Run(int bookId, BookCreationDTO bookCreationDTO)
         {
             _logger.LogInformation("Updating book with ID '{ID}'", bookId);
 
@@ -27,19 +28,19 @@ namespace LibraryAPI.UseCases.Books.Put
             if (!exists)
             {
                 _logger.LogWarning($"Book with ID {bookId} was not found.");
-                return false;
+                return Result.NotFound();
             }
 
             var book = _mapper.Map<Book>(bookCreationDTO);
             book.Id = bookId;
-            assignAuthorsOrder(book);
+            AssignAuthorsOrder(book);
 
             await _bookRepository.Update(book);
             _logger.LogInformation($"Book with ID {book.Id} updated successfully.");
-            return true;
+            return Result.Success();
         }
 
-        private void assignAuthorsOrder(Book book)
+        private void AssignAuthorsOrder(Book book)
         {
             if (book.Authors is not null)
             {
