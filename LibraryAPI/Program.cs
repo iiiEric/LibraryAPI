@@ -3,6 +3,8 @@ using LibraryAPI.DatabaseAccess.AuthorsCollectionsRepository;
 using LibraryAPI.DatabaseAccess.AuthorsRepository;
 using LibraryAPI.DatabaseAccess.BooksRepository;
 using LibraryAPI.Entities;
+using LibraryAPI.Messaging.Services.Consumer;
+using LibraryAPI.Messaging.Services.Sender;
 using LibraryAPI.Middlewares;
 using LibraryAPI.Services;
 using LibraryAPI.Swagger;
@@ -102,11 +104,10 @@ builder.Services.AddTransient<IBookGetByIdUseCase, BookGetByIdUseCase>();
 builder.Services.AddTransient<IBookPostUseCase, BookPostUseCase>();
 builder.Services.AddTransient<IBookPutUseCase, BookPutUseCase>();
 builder.Services.AddTransient<IBookDeleteUseCase, BookDeleteUseCase>();
-
-
 #endregion
 
-
+builder.Services.AddSingleton<IMessageBus, RabbitMQMessageBus>();
+builder.Services.AddHostedService<EmailConsumerService>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication().AddJwtBearer(options =>

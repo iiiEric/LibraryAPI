@@ -2,6 +2,8 @@
 using LibraryAPI.Data;
 using LibraryAPI.DTOs.Users;
 using LibraryAPI.Entities;
+using LibraryAPI.Messaging.Messages;
+using LibraryAPI.Messaging.Services.Sender;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -11,7 +13,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LibraryAPI.Controllers.V1
 {
@@ -25,9 +26,10 @@ namespace LibraryAPI.Controllers.V1
         private readonly IUsersService _usersServicies;
         private readonly ApplicationDbContext _applicationDbContext;
         private readonly IMapper _mapper;
+        private readonly IMessageBus _messageBus;
 
         public UsersController(UserManager<User> userManager, IConfiguration configuration, SignInManager<User> signInManager, 
-            IUsersService usersServicies, ApplicationDbContext applicationDbContext, IMapper mapper)
+            IUsersService usersServicies, ApplicationDbContext applicationDbContext, IMapper mapper, IMessageBus messageBus)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -35,10 +37,11 @@ namespace LibraryAPI.Controllers.V1
             _usersServicies = usersServicies;
             _applicationDbContext = applicationDbContext;
             _mapper = mapper;
+            _messageBus = messageBus;
         }
 
         [HttpGet(Name = "GetUsersV1")]
-        [Authorize("AdminV1")]
+        [Authorize(Policy = "Admin")]
         public async Task<ActionResult<IEnumerable<UserDTO>>> Get()
         {
             var users = await _applicationDbContext.Users.ToListAsync();
@@ -47,6 +50,7 @@ namespace LibraryAPI.Controllers.V1
         }
 
         [HttpPost("registerV1", Name = "RegisterUserV1")]
+        [Authorize(Policy = "Admin")]
         public async Task<ActionResult<AuthenticationResponseDTO>> Register(UserCredentialsDTO userCredentialsDTO)
         {
             var user = new User
@@ -59,6 +63,13 @@ namespace LibraryAPI.Controllers.V1
 
             if (result.Succeeded)
             {
+                //unnecessary functionality at the moment
+                //var message = new NewUserRegisteredMessage
+                //{
+                //    Email = user.Email!
+                //};
+                //await _messageBus.Publish(message, _configuration["RabbitMQ:Queues:NewUserQueue"]!);
+
                 var authenticationResponse = await CreateToken(userCredentialsDTO);
                 return Ok(authenticationResponse);
             }
